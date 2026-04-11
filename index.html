@@ -7,22 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .header-gradient { background: linear-gradient(135deg, #0068b7 0%, #004a82 100%); }
-        .section-title-green { border-left: 6px solid #2d6a4f; background: #f0fff4; padding: 8px 15px; font-weight: bold; }
-        .section-title-blue { border-left: 6px solid #0068b7; background: #ebf8ff; padding: 8px 15px; font-weight: bold; }
+        .section-title-green { border-left: 6px solid #2d6a4f; background: #f0fff4; padding: 10px 15px; font-weight: bold; }
+        .section-title-blue { border-left: 6px solid #0068b7; background: #ebf8ff; padding: 10px 15px; font-weight: bold; }
+        /* カレンダーのレスポンシブ枠 */
+        .calendar-container { position: relative; padding-bottom: 75%; height: 0; overflow: hidden; }
+        @media (min-width: 768px) { .calendar-container { padding-bottom: 65%; } }
+        .calendar-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     </style>
 </head>
-<body class="text-slate-800">
+<body>
 
-    <header class="header-gradient text-white py-6 shadow-lg">
+    <header class="header-gradient text-white py-8 shadow-lg">
         <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-bold italic">西川口 北町町内会</h1>
-                <p class="text-sm opacity-90 mt-1">〜みんなでつくる みんなのまち〜（埼玉県川口市）</p>
+            <div class="text-center md:text-left">
+                <h1 class="text-3xl md:text-4xl font-bold italic tracking-wider">西川口 北町町内会</h1>
+                <p class="text-sm opacity-90 mt-2 font-medium">〜みんなでつくる 安心・安全な北町〜（川口市）</p>
             </div>
-            <div class="mt-4 md:mt-0 bg-white/10 p-2 rounded text-xs">
-                北町にお住まいの方、お気軽にご参加ください
+            <div class="mt-6 md:mt-0 bg-white/20 backdrop-blur-sm p-3 rounded-lg border border-white/30 text-xs md:text-sm">
+                並木小学校校区の住民自治組織です
             </div>
         </div>
     </header>
@@ -31,120 +35,81 @@
         
         <aside class="md:w-1/4 space-y-6 order-2 md:order-1">
             
-            <nav class="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200">
-                <div class="bg-blue-700 text-white px-4 py-2 text-sm font-bold">メニュー</div>
-                <ul class="divide-y divide-slate-100">
-                    <li><a href="#about" class="block px-4 py-3 hover:bg-blue-50 text-sm">🏡 北町町内会の紹介</a></li>
-                    <li><a href="#news" class="block px-4 py-3 hover:bg-blue-50 text-sm">📢 最新情報</a></li>
-                    <li><a href="#calendar" class="block px-4 py-3 hover:bg-blue-50 text-sm">📅 行事カレンダー</a></li>
-                    <li><a href="#safety" class="block px-4 py-3 hover:bg-blue-50 text-sm">🚨 防災・安全案内</a></li>
-                    <li><a href="#join" class="block px-4 py-3 hover:bg-blue-50 text-sm">📝 加入申し込み</a></li>
+            <nav class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+                <div class="bg-blue-700 text-white px-4 py-3 text-sm font-bold tracking-widest text-center">MENU</div>
+                <ul class="divide-y divide-slate-100 font-medium">
+                    <li><a href="#news" class="block px-4 py-3 hover:bg-blue-50 text-sm transition">📢 最新情報・お知らせ</a></li>
+                    <li><a href="#calendar" class="block px-4 py-3 hover:bg-blue-50 text-sm transition">📅 行事カレンダー</a></li>
+                    <li><a href="#projects" class="block px-4 py-3 hover:bg-blue-50 text-sm transition">📋 主な事業内容</a></li>
+                    <li><a href="#safety" class="block px-4 py-3 hover:bg-blue-50 text-sm transition text-red-600">🚨 防災・安全情報</a></li>
                 </ul>
             </nav>
 
-            <div class="space-y-3">
-                <a href="https://www.city.kawaguchi.lg.jp/" target="_blank" class="block w-full bg-cyan-100 hover:bg-cyan-200 text-cyan-800 py-3 px-4 rounded-md text-center font-bold text-sm shadow-sm transition">川口市ホームページ</a>
-                <a href="https://www.city.kawaguchi.lg.jp/soshiki/01110/050/3/1/index.html" target="_blank" class="block w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-800 py-3 px-4 rounded-md text-center font-bold text-sm shadow-sm transition">川口市ごみ分別ガイド</a>
-                <a href="https://www.city.kawaguchi.lg.jp/shiseijoho/koho/koho_kawaguchi/index.html" target="_blank" class="block w-full bg-orange-100 hover:bg-orange-200 text-orange-800 py-3 px-4 rounded-md text-center font-bold text-sm shadow-sm transition">広報かわぐち一覧</a>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+                <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase text-center">外部リンク</h4>
+                <a href="https://www.city.kawaguchi.lg.jp/" target="_blank" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-800 py-3 rounded-md text-center font-bold text-sm border border-blue-200 transition">川口市役所 HP</a>
+                <a href="https://www.city.kawaguchi.lg.jp/soshiki/01110/050/3/1/index.html" target="_blank" class="block w-full bg-green-50 hover:bg-green-100 text-green-800 py-3 rounded-md text-center font-bold text-sm border border-green-200 transition">ごみ分別ガイド</a>
+                <a href="https://www.city.kawaguchi.lg.jp/shiseijoho/koho/koho_kawaguchi/index.html" target="_blank" class="block w-full bg-orange-50 hover:bg-orange-100 text-orange-800 py-3 rounded-md text-center font-bold text-sm border border-orange-200 transition">広報かわぐち</a>
             </div>
 
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
-                <p class="text-xs font-bold text-slate-500 mb-2">携帯用URL</p>
-                <div class="bg-slate-100 h-32 w-32 mx-auto flex items-center justify-center text-slate-400 text-xs">QRコード</div>
-                <p class="text-[10px] text-slate-400 mt-2 italic">スマホでもご覧いただけます</p>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center">
+                <p class="text-[10px] font-bold text-slate-400 mb-3 tracking-widest uppercase">Mobile Access</p>
+                <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg aspect-square flex flex-col items-center justify-center">
+                    <span class="text-slate-300 text-[10px]">ここにQRコード</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">スマホからでも<br>最新情報が確認できます</p>
             </div>
         </aside>
 
         <main class="md:w-3/4 space-y-12 order-1 md:order-2">
             
-            <section class="rounded-xl overflow-hidden shadow-md h-48 md:h-64 relative">
+            <section class="rounded-2xl overflow-hidden shadow-md h-48 md:h-72 relative border-4 border-white">
                 <img src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&q=80&w=1200" alt="北町の風景" class="w-full h-full object-cover">
-                <div class="absolute bottom-0 bg-black/50 text-white p-4 w-full">
-                    <p class="text-sm">今月の風景：北町公園の緑</p>
+                <div class="absolute bottom-0 bg-gradient-to-t from-black/70 to-transparent text-white p-6 w-full">
+                    <p class="text-lg font-bold">住みよい街、西川口北町へようこそ</p>
                 </div>
             </section>
 
             <section id="news">
-                <h3 class="section-title-green text-xl mb-4 text-green-800">町内会からのお知らせ</h3>
-                <div id="news-list" class="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 shadow-sm">
-                    <p class="p-4 text-center text-slate-500">お知らせを読み込み中...</p>
+                <h3 class="section-title-green text-xl mb-4 text-green-900">町内会からの新着情報</h3>
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div id="news-list" class="divide-y divide-slate-100">
+                        <p class="p-10 text-center text-slate-400 animate-pulse">お知らせを読み込み中...</p>
+                    </div>
                 </div>
             </section>
 
             <section id="calendar">
-                <h3 class="section-title-blue text-xl mb-4 text-blue-800">行事カレンダー</h3>
-                <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="aspect-video">
-                        <iframe src="https://calendar.google.com/calendar/embed?src=ja.japanese%23holiday%40group.v.calendar.google.com&ctz=Asia%2FTokyo" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>
+                <h3 class="section-title-blue text-xl mb-4 text-blue-900">行事カレンダー</h3>
+                <div class="bg-white p-1 rounded-xl border border-slate-200 shadow-md overflow-hidden">
+                    <div class="calendar-container">
+                        <iframe 
+                            src="https://calendar.google.com/calendar/embed?src=kitacho.nishikawaguchi%40gmail.com&ctz=Asia%2FTokyo&mode=MONTH&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0" 
+                            style="border:0" 
+                            frameborder="0" 
+                            scrolling="no">
+                        </iframe>
                     </div>
                 </div>
+                <p class="text-[10px] text-slate-400 mt-2 ml-2">※予定は変更になる場合があります。詳細は町内会だよりをご確認ください。</p>
             </section>
 
-            <section id="about">
-                <h3 class="section-title-blue text-xl mb-4 text-blue-800">おもな事業内容</h3>
-                <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
-                    <p class="text-sm leading-relaxed mb-4">北町町内会では、住民の皆様が安心して暮らせるよう、防犯パトロールや資源回収、季節の行事を行っています。</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-slate-50 p-3 rounded flex items-center justify-between border border-slate-100">
-                            <span class="text-sm font-bold">📄 町内会だより 4月号</span>
-                            <a href="#" class="text-xs bg-blue-600 text-white px-2 py-1 rounded">閲覧</a>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded flex items-center justify-between border border-slate-100">
-                            <span class="text-sm font-bold">📄 町内会だより 3月号</span>
-                            <a href="#" class="text-xs bg-blue-600 text-white px-2 py-1 rounded">閲覧</a>
-                        </div>
+            <section id="projects">
+                <h3 class="section-title-blue text-xl mb-4 text-blue-900">主な事業内容</h3>
+                <div class="bg-white p-8 rounded-xl border border-slate-200 shadow-sm grid md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h4 class="font-bold border-b pb-1 text-slate-700">年間行事</h4>
+                        <ul class="text-sm space-y-2 text-slate-600">
+                            <li>・春の一斉清掃、夏祭り</li>
+                            <li>・防災訓練、秋のレクリエーション</li>
+                            <li>・敬老お祝い会、もちつき大会</li>
+                        </ul>
                     </div>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <footer class="bg-slate-800 text-white py-12 px-4 mt-20">
-        <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
-            <div>
-                <h4 class="text-lg font-bold mb-4">西川口 北町町内会 事務局</h4>
-                <p class="text-sm text-slate-400">埼玉県川口市並木周辺（並木小学校校区）</p>
-                <p class="text-sm text-slate-400 mt-2 italic">※お問い合わせは町内会だより記載の番号まで</p>
-            </div>
-            <div class="text-right">
-                <p class="text-xs text-slate-500">&copy; 2026 西川口 北町町内会</p>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        // スプレッドシート連携用コード
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8qqCO0DH94_iS0cY25eapiPsFlIADdbAhY7BXkqMlzBKhfrlOd2G6gpFwfLIZlzkZhOzS2DkYBggv/pub?gid=0&single=true&output=csv";
-
-        async function fetchNews() {
-            try {
-                const response = await fetch(csvUrl);
-                const data = await response.text();
-                const rows = data.split('\n').slice(1);
-                const newsList = document.getElementById('news-list');
-                newsList.innerHTML = '';
-
-                rows.forEach(row => {
-                    const cols = row.split(',');
-                    if (cols.length >= 3) {
-                        const item = document.createElement('div');
-                        item.className = "p-4 hover:bg-slate-50 transition flex justify-between items-center";
-                        item.innerHTML = `
-                            <div class="flex items-center space-x-4">
-                                <span class="text-xs font-mono text-slate-400">${cols[0]}</span>
-                                <span class="font-medium text-sm text-slate-700 underline decoration-blue-200">${cols[2]}</span>
-                            </div>
-                            <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded">${cols[1]}</span>
-                        `;
-                        newsList.appendChild(item);
-                    }
-                });
-            } catch (e) {
-                document.getElementById('news-list').innerHTML = '<p class="p-4 text-red-500">データが取得できませんでした</p>';
-            }
-        }
-        fetchNews();
-    </script>
-</body>
-</html>
+                    <div class="space-y-4">
+                        <h4 class="font-bold border-b pb-1 text-slate-700">町内会だより（PDF）</h4>
+                        <div class="space-y-2">
+                            <a href="#" class="flex items-center justify-between bg-slate-50 p-2 rounded text-xs hover:bg-slate-100 border border-slate-100">
+                                <span>📄 北町町内会だより 令和8年4月号</span>
+                                <span class="text-blue-600 font-bold">閲覧 ≫</span>
+                            </a>
+                            <a href="#" class="flex items-center justify-between
