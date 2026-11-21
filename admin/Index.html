@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>北町町内会 お知らせ管理</title>
+  <style>
+    :root{--blue:#0068b7;--ink:#1e293b;--line:#cbd5e1;--bg:#f1f5f9}
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink)}
+    header{background:var(--blue);color:#fff;padding:18px 16px}.wrap{max-width:760px;margin:auto}.wrap h1{font-size:20px;margin:0}.user{font-size:12px;margin-top:6px;opacity:.9}
+    main{padding:16px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}.card h2{font-size:17px;margin:0 0 14px}
+    label{display:block;font-weight:bold;font-size:14px;margin-top:12px} input,select{width:100%;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:16px;background:#fff}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pdf{border:2px dashed var(--line);background:#f8fafc}.or{font-size:12px;color:#64748b;margin:8px 0}
+    button{min-height:48px;border:0;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer}.submit{width:100%;background:var(--blue);color:#fff;margin-top:16px}.submit:disabled{opacity:.55}
+    .message{min-height:24px;margin:10px 0;font-size:14px}.ok{color:#166534}.error{color:#b91c1c}
+    .item{border-bottom:1px solid #e2e8f0;padding:14px 0}.item:last-child{border-bottom:0}.meta{font-size:12px;color:#64748b}.title{font-weight:bold;margin:6px 0}.actions{display:flex;gap:8px}.delete{background:#fee2e2;color:#991b1b;padding:0 14px}.view{background:#e0f2fe;color:#075985;padding:0 14px;text-decoration:none;display:inline-flex;align-items:center}
+    @media(max-width:520px){.row{grid-template-columns:1fr}.card{padding:14px} main{padding:10px}}
+  </style>
+</head>
+<body>
+<header><div class="wrap"><h1>西川口 北町町内会</h1><div class="user">ログイン中：<?= userEmail ?></div></div></header>
+<main class="wrap">
+  <section class="card">
+    <h2>お知らせを登録</h2>
+    <div class="row">
+      <div><label for="date">日付</label><input id="date" type="date" required></div>
+      <div><label for="category">カテゴリ</label><select id="category"><option>防犯</option><option>衛生部</option><option>行事</option><option>防災</option><option>お知らせ</option><option>テスト</option></select></div>
+    </div>
+    <label for="content">タイトル</label>
+    <input id="content" type="text" maxlength="200" placeholder="例：3月 公園清掃のお知らせ" required>
+    <label for="pdf">PDFを選択（任意）</label>
+    <input id="pdf" class="pdf" type="file" accept="application/pdf,.pdf">
+    <div class="or">または、既存リンクを入力</div>
+    <input id="link" type="url" placeholder="https://drive.google.com/...">
+    <button id="submit" class="submit" type="button">登録する</button>
+    <div id="message" class="message"></div>
+  </section>
+
+  <section class="card">
+    <h2>登録済みのお知らせ</h2>
+    <div id="list">読み込み中...</div>
+  </section>
+</main>
+
+<script>
+  const dateInput=document.getElementById('date');
+  dateInput.value=new Date().toLocaleDateString('sv-SE');
+
+  function escapeHtml(value){const d=document.createElement('div');d.textContent=value||'';return d.innerHTML}
+  function showMessage(text,type){const el=document.getElementById('message');el.className='message '+type;el.textContent=text}
+
+  function loadList(){
+    document.getElementById('list').textContent='読み込み中...';
+    google.script.run.withSuccessHandler(rows=>{
+      const list=document.getElementById('list');
+      if(!rows.length){list.textContent='登録されたお知らせはありません。';return}
+      list.innerHTML=rows.map(row=>`
+        <article class="item">
+          <div class="meta">${escapeHtml(row.date)} ・ ${escapeHtml(row.category)}</div>
+          <div class="title">${escapeHtml(row.content)}</div>
+          <div class="actions">
+            ${row.link?`<a class="view" href="${escapeHtml(row.link)}" target="_blank" rel="noopener noreferrer">PDFを見る</a>`:''}
+            <button class="delete" type="button" onclick="deleteItem(${row.rowIndex})">削除</button>
+          </div>
+        </article>`).join('');
+    }).withFailureHandler(err=>document.getElementById('list').textContent=err.message||String(err)).listNews();
+  }
+
+  function readFile(file){
+    return new Promise((resolve,reject)=>{
+      if(!file){resolve(null);return}
+      if(file.type && file.type!=='application/pdf'){reject(new Error('PDFファイルを選択してください。'));return}
+      const reader=new FileReader();
+      reader.onload=()=>resolve({name:file.name,mimeType:file.type||'application/pdf',data:String(reader.result).split(',')[1]});
+      reader.onerror=()=>reject(new Error('PDFの読み込みに失敗しました。'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function register(){
+    const button=document.getElementById('submit');
+    button.disabled=true;
+    showMessage('登録しています...','');
+    try{
+      const date=dateInput.value.replaceAll('-','.');
+      const category=document.getElementById('category').value;
+      const content=document.getElementById('content').value.trim();
+      const link=document.getElementById('link').value.trim();
+      const fileInput=document.getElementById('pdf');
+      if(!date||!category||!content) throw new Error('日付、カテゴリ、タイトルを入力してください。');
+      const file=await readFile(fileInput.files[0]);
+      google.script.run.withSuccessHandler(result=>{
+        showMessage('登録しました。','ok');
+        document.getElementById('content').value='';
+        document.getElementById('link').value='';
+        fileInput.value='';
+        button.disabled=false;
+        loadList();
+      }).withFailureHandler(err=>{
+        showMessage(err.message||String(err),'error');
+        button.disabled=false;
+      }).registerNews({date,category,content,link,file});
+    }catch(err){showMessage(err.message||String(err),'error');button.disabled=false}
+  }
+
+  function deleteItem(rowIndex){
+    if(!confirm('このお知らせを削除しますか？'))return;
+    google.script.run.withSuccessHandler(loadList).withFailureHandler(err=>alert(err.message||String(err))).deleteNews(rowIndex);
+  }
+
+  document.getElementById('submit').addEventListener('click',register);
+  loadList();
+</script>
+</body>
+</html>
