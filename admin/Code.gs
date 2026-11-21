@@ -83,7 +83,7 @@ function analyzeFlyer(file) {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify({
-      contents: [{parts: [{text: prompt}, {inline_data: {mime_type: mimeType, data: file.data}}]}],
+      contents: [{parts: [{text: prompt}, {inlineData: {mimeType: mimeType, data: file.data}}]}],
       generationConfig: {responseMimeType: 'application/json', temperature: 0.1}
     }),
     muteHttpExceptions: true
@@ -96,7 +96,11 @@ function analyzeFlyer(file) {
   const text = result.candidates && result.candidates[0] && result.candidates[0].content.parts
     .map(part => part.text || '').join('');
   if (!text) throw new Error('チラシから情報を読み取れませんでした。手入力してください。');
-  const parsed = JSON.parse(text);
+  let parsed = JSON.parse(text);
+  if (Array.isArray(parsed)) parsed = parsed[0] || {};
+  if (!parsed.title && !parsed.startDate && !parsed.startTime) {
+    throw new Error('Geminiの抽出結果を確認してください: ' + text.slice(0, 400));
+  }
   return {
     title: String(parsed.title || ''),
     category: String(parsed.category || '行事'),
