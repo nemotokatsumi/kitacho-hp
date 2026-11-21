@@ -1,4 +1,4 @@
-// 北町町内会 お知らせ管理用 Google Apps Script
+// 北町町内会 お知らせ管理用 Google Apps Script 
 // このファイルをGoogle Apps Scriptプロジェクトへ貼り付けてウェブアプリとして公開します。
 
 const SPREADSHEET_ID = '1ALstLpWWSMPcdOjt6Egh5Msxcoo_bshHvB4uInvlqyk';
@@ -126,29 +126,59 @@ function normalizeTime_(value) {
 function createCalendarEvent_(form, link) {
   const properties = PropertiesService.getScriptProperties();
   const calendarId = properties.getProperty('CALENDAR_ID') || DEFAULT_CALENDAR_ID;
-  const calendar = CalendarApp.getCalendarById(calendarId);
-  if (!calendar) throw new Error('登録先カレンダーが見つからないか、編集権限がありません。');
+  const calendar = getWritableCalendar_(calendarId);
 
-  const startDate = parseDate_(form.date);
-  const endDate = parseDate_(form.endDate) || startDate;
+  const startDate = parseDate_(form.date, '開催日');
+  const endDate = String(form.endDate || '').trim() ? parseDate_(form.endDate, '終了日') : startDate;
   if (endDate < startDate) throw new Error('終了日は開始日以降にしてください。');
   const description = [String(form.description || '').trim(), link ? '添付資料: ' + link : ''].filter(Boolean).join('\n');
   const options = {location: String(form.location || '').trim(), description: description};
 
   if (!form.startTime) {
     const exclusiveEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() + 1);
-    return {event: calendar.createAllDayEvent(form.content, startDate, exclusiveEnd, options), calendarId: calendarId};
+    return {event: withCalendarWriteCheck_(calendarId, () => calendar.createAllDayEvent(form.content, startDate, exclusiveEnd, options)), calendarId: calendarId};
   }
 
   const start = combineDateTime_(startDate, form.startTime);
   let end = form.endTime ? combineDateTime_(endDate, form.endTime) : new Date(start.getTime() + 60 * 60 * 1000);
   if (end <= start) end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
-  return {event: calendar.createEvent(form.content, start, end, options), calendarId: calendarId};
+  return {event: withCalendarWriteCheck_(calendarId, () => calendar.createEvent(form.content, start, end, options)), calendarId: calendarId};
 }
 
-function parseDate_(value) {
+function withCalendarWriteCheck_(calendarId, fn) {
+  try {
+    return fn();
+  } catch (error) {
+    throw new Error('カレンダー（' + calendarId + '）へ予定を追加できませんでした。共有権限が「閲覧のみ」になっていないか確認してください。（' + error.message + '）');
+  }
+}
+
+// 共有されたカレンダーでも、本人のカレンダーリストに追加されていないと
+// getCalendarById は null を返すため、未登録なら自動で追加してから再取得する。
+function getWritableCalendar_(calendarId) {
+  const userEmail = String(Session.getEffectiveUser().getEmail() || '').toLowerCase();
+  if (userEmail && userEmail === String(calendarId).toLowerCase()) {
+    return CalendarApp.getDefaultCalendar();
+  }
+
+  let calendar = CalendarApp.getCalendarById(calendarId);
+  if (!calendar) {
+    try {
+      calendar = CalendarApp.subscribeToCalendar(calendarId, {hidden: false, selected: true});
+    } catch (error) {
+      calendar = null;
+    }
+  }
+  if (!calendar) {
+    throw new Error('登録先カレンダー（' + calendarId + '）にアクセスできません。カレンダーの所有者が「' +
+      userEmail + '」へ「予定の変更」権限で共有しているか確認してください。');
+  }
+  return calendar;
+}
+
+function parseDate_(value, label) {
   const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) throw new Error('開催日を確認してください。');
+  if (!match) throw new Error((label || '日付') + 'の形式が正しくありません（受信値: "' + String(value || '') + '"）。');
   return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
 }
 
