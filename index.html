@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>西川口 北町町内会 公式サイト</title>
+    <meta name="theme-color" content="#0068b7">
+    <meta name="description" content="川口市西川口北町町内会のお知らせ、行事カレンダー、防災情報を掲載しています。">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
@@ -11,13 +13,21 @@
         .header-gradient { background: linear-gradient(135deg, #0068b7 0%, #004a82 100%); }
         .section-title-green { border-left: 6px solid #2d6a4f; background: #f0fff4; padding: 10px 15px; font-weight: bold; }
         .section-title-blue { border-left: 6px solid #0068b7; background: #ebf8ff; padding: 10px 15px; font-weight: bold; }
+        .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 50; background: #fff; color: #004a82; padding: .75rem 1rem; border-radius: .5rem; font-weight: bold; }
+        .skip-link:focus { top: 1rem; }
         /* カレンダーのレスポンシブ枠 */
         .calendar-container { position: relative; padding-bottom: 75%; height: 0; overflow: hidden; }
         @media (min-width: 768px) { .calendar-container { padding-bottom: 65%; } }
         .calendar-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        @media (max-width: 767px) {
+            .mobile-section-link { min-height: 44px; }
+            .calendar-container { height: 420px; padding-bottom: 0; }
+        }
     </style>
 </head>
 <body>
+
+    <a class="skip-link" href="#main">本文へ移動</a>
 
     <header class="header-gradient text-white py-8 shadow-lg">
         <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
@@ -31,11 +41,20 @@
         </div>
     </header>
 
+    <nav class="md:hidden sticky top-0 z-40 bg-white/95 border-b border-slate-200 backdrop-blur" aria-label="クイックメニュー">
+        <div class="grid grid-cols-4 px-1">
+            <a href="#news" class="mobile-section-link flex items-center justify-center px-1 py-3 text-xs font-bold text-slate-700">お知らせ</a>
+            <a href="#calendar" class="mobile-section-link flex items-center justify-center px-1 py-3 text-xs font-bold text-slate-700">行事</a>
+            <a href="#projects" class="mobile-section-link flex items-center justify-center px-1 py-3 text-xs font-bold text-slate-700">事業</a>
+            <a href="#safety" class="mobile-section-link flex items-center justify-center px-1 py-3 text-xs font-bold text-red-700">防災</a>
+        </div>
+    </nav>
+
     <div class="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
         
         <aside class="md:w-1/4 space-y-6 order-2 md:order-1">
             
-            <nav class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+            <nav class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200" aria-label="ページ内メニュー">
                 <div class="bg-blue-700 text-white px-4 py-3 text-sm font-bold tracking-widest text-center">MENU</div>
                 <ul class="divide-y divide-slate-100 font-medium">
                     <li><a href="#news" class="block px-4 py-3 hover:bg-blue-50 text-sm transition">📢 最新情報・お知らせ</a></li>
@@ -47,21 +66,21 @@
 
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
                 <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase text-center">外部リンク</h4>
-                <a href="https://www.city.kawaguchi.lg.jp/" target="_blank" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-800 py-3 rounded-md text-center font-bold text-sm border border-blue-200 transition">川口市役所 HP</a>
-                <a href="https://www.city.kawaguchi.lg.jp/soshiki/01110/050/3/1/index.html" target="_blank" class="block w-full bg-green-50 hover:bg-green-100 text-green-800 py-3 rounded-md text-center font-bold text-sm border border-green-200 transition">ごみ分別ガイド</a>
-                <a href="https://www.city.kawaguchi.lg.jp/shiseijoho/koho/koho_kawaguchi/index.html" target="_blank" class="block w-full bg-orange-50 hover:bg-orange-100 text-orange-800 py-3 rounded-md text-center font-bold text-sm border border-orange-200 transition">広報かわぐち</a>
+                <a href="https://www.city.kawaguchi.lg.jp/" target="_blank" rel="noopener noreferrer" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-800 py-3 rounded-md text-center font-bold text-sm border border-blue-200 transition">川口市役所 HP</a>
+                <a href="https://www.city.kawaguchi.lg.jp/kurashi_tetsuzuki/gomi_risaikuru/2/index.html" target="_blank" rel="noopener noreferrer" class="block w-full bg-green-50 hover:bg-green-100 text-green-800 py-3 rounded-md text-center font-bold text-sm border border-green-200 transition">ごみ分別ガイド</a>
+                <a href="https://www.city.kawaguchi.lg.jp/soshiki/01010/020/2/2480.html" target="_blank" rel="noopener noreferrer" class="block w-full bg-orange-50 hover:bg-orange-100 text-orange-800 py-3 rounded-md text-center font-bold text-sm border border-orange-200 transition">広報かわぐち</a>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center">
                 <p class="text-[10px] font-bold text-slate-400 mb-3 tracking-widest uppercase">Mobile Access</p>
-                <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg aspect-square flex flex-col items-center justify-center">
-                    <span class="text-slate-300 text-[10px]">ここにQRコード</span>
+                <div class="bg-slate-50 border-2 border-slate-200 rounded-lg aspect-square flex items-center justify-center p-3">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fnemotokatsumi.github.io%2Fkitacho-hp%2F" alt="北町町内会ホームページのQRコード" class="w-full h-full object-contain">
                 </div>
                 <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">スマホからでも<br>最新情報が確認できます</p>
             </div>
         </aside>
 
-        <main class="md:w-3/4 space-y-12 order-1 md:order-2">
+        <main id="main" class="md:w-3/4 space-y-12 order-1 md:order-2">
             
             <section class="rounded-2xl overflow-hidden shadow-md h-48 md:h-72 relative border-4 border-white">
                 <img src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&q=80&w=1200" alt="北町の風景" class="w-full h-full object-cover">
@@ -86,12 +105,17 @@
                         <iframe 
                             src="https://calendar.google.com/calendar/embed?src=kitacho.nishikawaguchi%40gmail.com&ctz=Asia%2FTokyo&mode=MONTH&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0" 
                             style="border:0" 
-                            frameborder="0" 
+                            title="北町町内会 行事カレンダー"
+                            loading="lazy"
+                            frameborder="0"
                             scrolling="no">
                         </iframe>
                     </div>
                 </div>
                 <p class="text-[10px] text-slate-400 mt-2 ml-2">※予定は変更になる場合があります。詳細は町内会だよりをご確認ください。</p>
+                <a href="https://calendar.google.com/calendar/embed?src=kitacho.nishikawaguchi%40gmail.com&ctz=Asia%2FTokyo&mode=MONTH&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0" target="_blank" rel="noopener noreferrer" class="inline-flex items-center mt-3 min-h-[44px] px-4 text-sm font-bold text-blue-700 hover:text-blue-900">
+                    Googleカレンダーで見る ›
+                </a>
             </section>
 
             <section id="projects">
@@ -108,14 +132,14 @@
                     <div class="space-y-4">
                         <h4 class="font-bold border-b pb-1 text-slate-700">町内会だより（PDF）</h4>
                         <div class="space-y-2">
-                            <a href="#" class="flex items-center justify-between bg-slate-50 p-2 rounded text-xs hover:bg-slate-100 border border-slate-100">
+                            <div class="flex items-center justify-between bg-slate-50 p-3 rounded text-xs border border-slate-100" aria-label="令和8年4月号は準備中">
                                 <span>📄 北町町内会だより 令和8年4月号</span>
-                                <span class="text-blue-600 font-bold">閲覧 ≫</span>
-                            </a>
-                            <a href="#" class="flex items-center justify-between bg-slate-50 p-2 rounded text-xs hover:bg-slate-100 border border-slate-100">
+                                <span class="text-slate-500 font-bold">準備中</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-50 p-3 rounded text-xs border border-slate-100" aria-label="令和8年3月号は準備中">
                                 <span>📄 北町町内会だより 令和8年3月号</span>
-                                <span class="text-blue-600 font-bold">閲覧 ≫</span>
-                            </a>
+                                <span class="text-slate-500 font-bold">準備中</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -129,7 +153,7 @@
                     <h4 class="font-bold text-lg mb-1">指定緊急避難場所：川口市立並木小学校</h4>
                     <p class="text-sm text-gray-600">川口市並木2-8-1（当町内会から徒歩圏内）</p>
                 </div>
-                <a href="https://www.city.kawaguchi.lg.jp/soshiki/01040/010/3/21793.html" target="_blank" class="inline-block bg-red-600 text-white px-8 py-3 rounded-full font-bold hover:bg-red-700 transition shadow-lg">
+                <a href="https://www.city.kawaguchi.lg.jp/soshiki/01040/010/7/1/index.html" target="_blank" rel="noopener noreferrer" class="inline-block bg-red-600 text-white px-8 py-3 rounded-full font-bold hover:bg-red-700 transition shadow-lg">
                     川口市ハザードマップを見る
                 </a>
             </section>
@@ -157,42 +181,116 @@
     <script>
         const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8qqCO0DH94_iS0cY25eapiPsFlIADdbAhY7BXkqMlzBKhfrlOd2G6gpFwfLIZlzkZhOzS2DkYBggv/pub?gid=0&single=true&output=csv";
 
+        function parseCsv(text) {
+            const rows = [];
+            let row = [];
+            let value = '';
+            let quoted = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '"') {
+                    if (quoted && text[i + 1] === '"') {
+                        value += '"';
+                        i++;
+                    } else {
+                        quoted = !quoted;
+                    }
+                } else if (char === ',' && !quoted) {
+                    row.push(value.trim());
+                    value = '';
+                } else if ((char === '\n' || char === '\r') && !quoted) {
+                    if (char === '\r' && text[i + 1] === '\n') i++;
+                    row.push(value.trim());
+                    if (row.some(cell => cell !== '')) rows.push(row);
+                    row = [];
+                    value = '';
+                } else {
+                    value += char;
+                }
+            }
+
+            if (value !== '' || row.length > 0) {
+                row.push(value.trim());
+                if (row.some(cell => cell !== '')) rows.push(row);
+            }
+            return rows;
+        }
+
+        function makeNewsItem(date, category, content, link) {
+            const item = document.createElement('article');
+            item.className = "p-5 hover:bg-slate-50 transition flex flex-col md:flex-row md:items-start gap-3 md:gap-6";
+
+            const meta = document.createElement('div');
+            meta.className = "flex items-center gap-3 md:min-w-[170px]";
+
+            const dateElement = document.createElement('time');
+            dateElement.className = "text-xs font-bold text-slate-500 font-mono";
+            dateElement.textContent = date;
+            if (/^\d{4}[.-]\d{2}[.-]\d{2}$/.test(date)) {
+                dateElement.dateTime = date.replace(/[.]/g, '-');
+            }
+
+            const categoryElement = document.createElement('span');
+            categoryElement.className = "text-[10px] font-bold px-2 py-1 rounded bg-blue-100 text-blue-700 whitespace-nowrap";
+            categoryElement.textContent = category;
+
+            meta.append(dateElement, categoryElement);
+
+            const body = document.createElement('div');
+            body.className = "text-sm md:text-base font-bold text-slate-700 leading-relaxed";
+
+            if (link) {
+                const anchor = document.createElement('a');
+                anchor.href = link;
+                anchor.target = '_blank';
+                anchor.rel = 'noopener noreferrer';
+                anchor.className = "hover:text-blue-700 underline-offset-4 hover:underline";
+                anchor.textContent = content;
+                body.appendChild(anchor);
+            } else {
+                body.textContent = content;
+            }
+
+            item.append(meta, body);
+            return item;
+        }
+
         async function fetchNews() {
+            const newsList = document.getElementById('news-list');
             try {
-                const response = await fetch(csvUrl);
-                const data = await response.text();
-                const rows = data.split('\n').slice(1);
-                const newsList = document.getElementById('news-list');
-                
-                if (rows.length === 0 || (rows.length === 1 && rows[0].trim() === "")) {
-                    newsList.innerHTML = '<p class="p-10 text-center text-slate-400">現在、新しいお知らせはありません。</p>';
+                const response = await fetch(csvUrl, { cache: 'no-store' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const rows = parseCsv(await response.text()).slice(1);
+                const validRows = rows.filter(cols => cols.length >= 3 && cols[0] && cols[2]);
+
+                if (validRows.length === 0) {
+                    newsList.replaceChildren();
+                    const empty = document.createElement('p');
+                    empty.className = 'p-10 text-center text-slate-500';
+                    empty.textContent = '現在、新しいお知らせはありません。';
+                    newsList.appendChild(empty);
                     return;
                 }
 
-                newsList.innerHTML = '';
-                rows.forEach(row => {
-                    const cols = row.split(',');
-                    if (cols.length >= 3) {
-                        const item = document.createElement('div');
-                        item.className = "p-5 hover:bg-slate-50 transition flex flex-col md:flex-row md:items-center gap-2 md:gap-6";
-                        item.innerHTML = `
-                            <div class="flex items-center gap-3 min-w-[140px]">
-                                <span class="text-xs font-bold text-slate-400 font-mono">${cols[0]}</span>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700 whitespace-nowrap">${cols[1]}</span>
-                            </div>
-                            <div class="text-sm md:text-base font-bold text-slate-700">
-                                ${cols[2]}
-                            </div>
-                        `;
-                        newsList.appendChild(item);
-                    }
+                validRows.sort((a, b) => b[0].replace(/[.-]/g, '').localeCompare(a[0].replace(/[.-]/g, '')));
+
+                newsList.replaceChildren();
+                validRows.slice(0, 20).forEach(cols => {
+                    newsList.appendChild(makeNewsItem(cols[0], cols[1] || 'お知らせ', cols[2], cols[3] || ''));
                 });
-            } catch (e) {
-                document.getElementById('news-list').innerHTML = '<p class="p-10 text-center text-red-400">データの読み込みに失敗しました。</p>';
+            } catch (error) {
+                newsList.replaceChildren();
+                const failure = document.createElement('p');
+                failure.className = 'p-10 text-center text-red-600';
+                failure.textContent = 'データの読み込みに失敗しました。しばらくしてから再度お試しください。';
+                newsList.appendChild(failure);
+                console.error('お知らせの読み込みに失敗:', error);
             }
         }
 
-        window.onload = fetchNews;
+        window.addEventListener('DOMContentLoaded', fetchNews);
     </script>
 </body>
 </html>
