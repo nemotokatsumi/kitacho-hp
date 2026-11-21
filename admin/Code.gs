@@ -78,7 +78,7 @@ function analyzeFlyer(file) {
     'JSONだけを返してください。形式: {"title":"短い告知タイトル","category":"防犯/衛生部/行事/防災/お知らせのいずれか","startDate":"YYYY-MM-DDまたは空文字","endDate":"YYYY-MM-DDまたは空文字","startTime":"HH:mmまたは空文字","endTime":"HH:mmまたは空文字","location":"会場または空文字","description":"概要"}',
     '日付が判読できない場合は空文字にし、タイトルは「内容が伝わる短い日本語」にしてください。'
   ].join('\n');
-  const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey);
+  const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=' + encodeURIComponent(apiKey);
   const response = UrlFetchApp.fetch(endpoint, {
     method: 'post',
     contentType: 'application/json',
@@ -89,7 +89,7 @@ function analyzeFlyer(file) {
     muteHttpExceptions: true
   });
   if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
-    throw new Error('チラシを解析できませんでした。Gemini APIキーと利用設定を確認してください。');
+    throw new Error('Gemini APIエラー（HTTP ' + response.getResponseCode() + '）。APIキー、APIの有効化、利用枠を確認してください。');
   }
 
   const result = JSON.parse(response.getContentText());
