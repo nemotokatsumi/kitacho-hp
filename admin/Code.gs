@@ -39,7 +39,7 @@ function listNews() {
         date: values[0] || '',
         category: values[1] || '',
         content: values[2] || '',
-        link: values[3] || ''
+        link: toDriveViewUrl_(values[3])
       });
     }
   }
@@ -105,7 +105,7 @@ function analyzeFlyer(file) {
     pdfError: pdfError,
     pdfFileId: pdfFile ? pdfFile.getId() : '',
     pdfFileName: pdfFile ? pdfFile.getName() : '',
-    pdfUrl: pdfFile ? driveDownloadUrl_(pdfFile.getId()) : ''
+    pdfUrl: pdfFile ? driveViewUrl_(pdfFile.getId()) : ''
   });
 }
 
@@ -201,12 +201,12 @@ function convertImageToPdf_(file, mimeType, rotation) {
 function discardFlyerPdf(fileId) {
   requireAccess();
   const file = getFlyerPdf_(fileId);
-  const link = driveDownloadUrl_(file.getId());
   const sheet = getSheet();
   const lastRow = sheet.getLastRow();
   if (lastRow >= 2) {
-    const links = sheet.getRange(2, 4, lastRow - 1, 1).getValues().map(row => String(row[0]));
-    if (links.includes(link)) return {ok: false};
+    // 登録済みのお知らせで使われていれば消さない（リンクの形式が違っても、ファイルIDで判定）
+    const usedIds = sheet.getRange(2, 4, lastRow - 1, 1).getValues().map(row => driveFileIdFromUrl_(row[0]));
+    if (usedIds.includes(file.getId())) return {ok: false};
   }
   file.setTrashed(true);
   return {ok: true};
@@ -230,8 +230,25 @@ function getUploadFolder_() {
   return folderId ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder();
 }
 
-function driveDownloadUrl_(fileId) {
-  return 'https://drive.google.com/uc?export=download&id=' + fileId;
+// ダウンロードではなく、別タブでプレビュー表示されるリンク
+function driveViewUrl_(fileId) {
+  return 'https://drive.google.com/file/d/' + fileId + '/view';
+}
+
+// Drive のリンク（ダウンロード用・プレビュー用のどちらでも）からファイルIDを取り出す
+function driveFileIdFromUrl_(url) {
+  const text = String(url || '');
+  if (!/^https:\/\/(drive|docs)\.google\.com\//.test(text)) return '';
+  const match = text.match(/\/file\/d\/([\w-]+)/) || text.match(/[?&]id=([\w-]+)/);
+  return match ? match[1] : '';
+}
+
+// 以前保存したダウンロード用リンク（uc?export=download）をプレビュー用に変換する
+function toDriveViewUrl_(url) {
+  const text = String(url || '').trim();
+  if (!/^https:\/\/(drive|docs)\.google\.com\/uc\?/.test(text)) return text;
+  const fileId = driveFileIdFromUrl_(text);
+  return fileId ? driveViewUrl_(fileId) : text;
 }
 
 function normalizeDate_(value) {
@@ -323,7 +340,7 @@ function registerNews(form) {
   let calendarResult = null;
   if (form.pdfFileId) {
     // analyzeFlyer で PDF 化・保存済みのファイルを使い、再アップロードしない
-    link = driveDownloadUrl_(getFlyerPdf_(form.pdfFileId).getId());
+    link = driveViewUrl_(getFlyerPdf_(form.pdfFileId).getId());
   } else if (form.file && form.file.data && form.file.name) {
     const mimeType = String(form.file.mimeType || '').toLowerCase();
     if (mimeType !== 'application/pdf' && !mimeType.startsWith('image/')) {
@@ -332,7 +349,7 @@ function registerNews(form) {
     const blob = Utilities.newBlob(Utilities.base64Decode(form.file.data), mimeType, form.file.name);
     uploadedFile = getUploadFolder_().createFile(blob);
     uploadedFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    link = driveDownloadUrl_(uploadedFile.getId());
+    link = driveViewUrl_(uploadedFile.getId());
   } else if (form.link) {
     link = String(form.link).trim();
   }

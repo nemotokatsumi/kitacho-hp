@@ -12,6 +12,7 @@
     label{display:block;font-weight:bold;font-size:14px;margin-top:12px} input,select,textarea{width:100%;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:16px;background:#fff}textarea{min-height:84px;resize:vertical}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pdf{border:2px dashed var(--line);background:#f8fafc}.or{font-size:12px;color:#64748b;margin:8px 0}.hint{font-size:12px;color:#64748b;line-height:1.6;margin:8px 0}.analysis{min-height:24px;font-size:13px;margin:8px 0}.event-option{display:flex;align-items:center;gap:10px;padding:12px 0}.event-option input{width:20px;min-height:20px;accent-color:var(--blue)}
     button{min-height:48px;border:0;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer}.submit{width:100%;background:var(--blue);color:#fff;margin-top:16px}.submit:disabled{opacity:.55}
+    .link-open{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:bold;color:#075985}.link-open[hidden]{display:none}
     .message{min-height:24px;margin:10px 0;font-size:14px}.ok{color:#166534}.error{color:#b91c1c}
     .item{border-bottom:1px solid #e2e8f0;padding:14px 0}.item:last-child{border-bottom:0}.meta{font-size:12px;color:#64748b}.title{font-weight:bold;margin:6px 0}.actions{display:flex;gap:8px}.delete{background:#fee2e2;color:#991b1b;padding:0 14px}.view{background:#e0f2fe;color:#075985;padding:0 14px;text-decoration:none;display:inline-flex;align-items:center}
     @media(max-width:520px){.row{grid-template-columns:1fr}.card{padding:14px} main{padding:10px}}
@@ -39,6 +40,7 @@
     </div>
     <div class="or">または、既存リンクを入力</div>
     <input id="link" type="url" placeholder="https://drive.google.com/...">
+    <a id="link-open" class="link-open" href="#" target="_blank" rel="noopener noreferrer" hidden>リンクを別タブで開く</a>
     <label for="location">場所（任意）</label>
     <input id="location" type="text" maxlength="200" placeholder="例：北町公園">
     <label for="description">概要（任意）</label>
@@ -66,10 +68,20 @@
 
   function setAnalyzing(value){analyzing=value;submitButton.disabled=value}
 
+  // リンク欄にURLが入っていれば、その下に「別タブで開く」リンクを出す
+  const linkOpen=document.getElementById('link-open');
+  function updateLinkOpen(){
+    const url=linkInput.value.trim();
+    const ok=/^https?:\/\//i.test(url);
+    linkOpen.hidden=!ok;
+    linkOpen.href=ok?url:'#';
+  }
+  function setLink(value){linkInput.value=value;updateLinkOpen()}
+
   // 登録せずに差し替えた解析済みPDFを片付ける
   function discardPreparedPdf(){
     if(!preparedPdf)return;
-    if(linkInput.value.trim()===preparedPdf.url)linkInput.value='';
+    if(linkInput.value.trim()===preparedPdf.url)setLink('');
     google.script.run.withFailureHandler(()=>{}).discardFlyerPdf(preparedPdf.id);
     preparedPdf=null;
   }
@@ -158,7 +170,7 @@
         setAnalyzing(false);
         if(result.pdfFileId){
           preparedPdf={id:result.pdfFileId,url:result.pdfUrl};
-          linkInput.value=result.pdfUrl;
+          setLink(result.pdfUrl);
         }
         if(result.title)document.getElementById('content').value=result.title;
         if(result.startDate)dateInput.value=result.startDate;
@@ -208,7 +220,7 @@
       google.script.run.withSuccessHandler(result=>{
         showMessage(result.calendarRegistered?'お知らせとカレンダーに登録しました。':'お知らせを登録しました。','ok');
         document.getElementById('content').value='';
-        document.getElementById('link').value='';
+        setLink('');
         document.getElementById('pdf').value='';
         document.getElementById('end-date').value='';
         document.getElementById('start-time').value='';
@@ -233,6 +245,7 @@
   }
 
   document.getElementById('pdf').addEventListener('change',analyzeSelectedFlyer);
+  linkInput.addEventListener('input',updateLinkOpen);
   document.getElementById('submit').addEventListener('click',register);
   loadList();
 </script>

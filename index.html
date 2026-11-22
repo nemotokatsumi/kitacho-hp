@@ -217,7 +217,17 @@
             return rows;
         }
 
+        // Googleドライブのダウンロード用リンク（uc?export=download）を、
+        // 別タブでプレビュー表示されるリンク（/file/d/ID/view）に変換する
+        function toDriveViewUrl(url) {
+            const text = String(url || '').trim();
+            if (!/^https:\/\/(drive|docs)\.google\.com\/uc\?/.test(text)) return text;
+            const match = text.match(/[?&]id=([\w-]+)/);
+            return match ? 'https://drive.google.com/file/d/' + match[1] + '/view' : text;
+        }
+
         function makeNewsItem(date, category, content, link) {
+            link = toDriveViewUrl(link);
             const item = document.createElement('article');
             item.className = "p-5 hover:bg-slate-50 transition flex flex-col md:flex-row md:items-start gap-3 md:gap-6";
 
