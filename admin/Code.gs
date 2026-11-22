@@ -61,6 +61,10 @@ function getSheet() {
   return sheet;
 }
 
+const FLYER_PDF_MARK = 'kitacho-flyer-pdf';
+// SlidesApp.insertImage が受け付ける形式（WebP/HEIC は不可）
+const SLIDES_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+
 function analyzeFlyer(file) {
   requireAccess();
   if (!file || !file.data || !file.name) throw new Error('チラシ画像またはPDFを選択してください。');
@@ -70,13 +74,50 @@ function analyzeFlyer(file) {
   if (!supportedTypes.includes(mimeType)) throw new Error('PDF、JPEG、PNG、WebP、HEIC形式を選択してください。');
   if (file.data.length > 14 * 1024 * 1024) throw new Error('ファイルは10MB以下にしてください。');
 
+  // 1. Gemini でイベント情報を抽出（画像・PDF 共通）
+  let info = {title: '', category: '', startDate: '', endDate: '', startTime: '', endTime: '', location: '', description: '', rotation: 0};
+  let analysisError = '';
+  try {
+    info = extractFlyerInfo_(file, mimeType);
+  } catch (error) {
+    analysisError = error.message;
+  }
+
+  // 2. 画像は Google スライド経由で PDF 化して Drive に保存
+  let pdfFile = null;
+  let pdfError = '';
+  if (mimeType.startsWith('image/')) {
+    if (SLIDES_IMAGE_TYPES.includes(mimeType)) {
+      try {
+        pdfFile = convertImageToPdf_(file, mimeType, info.rotation);
+      } catch (error) {
+        pdfError = '画像のPDF化に失敗しました（' + error.message + '）。登録時に元の画像を保存します。';
+      }
+    } else {
+      pdfError = 'この画像形式はPDF化できないため、登録時に元の画像のまま保存します。';
+    }
+  }
+
+  if (analysisError && !pdfFile) throw new Error(analysisError);
+
+  return Object.assign(info, {
+    analysisError: analysisError,
+    pdfError: pdfError,
+    pdfFileId: pdfFile ? pdfFile.getId() : '',
+    pdfFileName: pdfFile ? pdfFile.getName() : '',
+    pdfUrl: pdfFile ? driveDownloadUrl_(pdfFile.getId()) : ''
+  });
+}
+
+function extractFlyerInfo_(file, mimeType) {
   const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
   if (!apiKey) throw new Error('管理者がApps Scriptのスクリプト プロパティにGEMINI_API_KEYを設定してください。');
 
   const prompt = [
     '町内会のチラシからイベント情報を抽出してください。画像内の情報だけを使い、推測しないでください。',
-    'JSONだけを返してください。形式: {"title":"短い告知タイトル","category":"防犯/衛生部/行事/防災/お知らせのいずれか","startDate":"YYYY-MM-DDまたは空文字","endDate":"YYYY-MM-DDまたは空文字","startTime":"HH:mmまたは空文字","endTime":"HH:mmまたは空文字","location":"会場または空文字","description":"概要"}',
-    '日付が判読できない場合は空文字にし、タイトルは「内容が伝わる短い日本語」にしてください。'
+    'JSONだけを返してください。形式: {"title":"短い告知タイトル","category":"防犯/衛生部/行事/防災/お知らせのいずれか","startDate":"YYYY-MM-DDまたは空文字","endDate":"YYYY-MM-DDまたは空文字","startTime":"HH:mmまたは空文字","endTime":"HH:mmまたは空文字","location":"会場または空文字","description":"概要","rotation":0}',
+    '日付が判読できない場合は空文字にし、タイトルは「内容が伝わる短い日本語」にしてください。',
+    'rotationは、チラシの文字が正しい向き（上が上）で読めるようにするために画像を時計回りに回転すべき角度で、0・90・180・270のいずれかの数値です。すでに正しい向きなら0にしてください。'
   ].join('\n');
   const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=' + encodeURIComponent(apiKey);
   const response = UrlFetchApp.fetch(endpoint, {
@@ -93,8 +134,8 @@ function analyzeFlyer(file) {
   }
 
   const result = JSON.parse(response.getContentText());
-  const text = result.candidates && result.candidates[0] && result.candidates[0].content.parts
-    .map(part => part.text || '').join('');
+  const text = result.candidates && result.candidates[0] && result.candidates[0].content &&
+    (result.candidates[0].content.parts || []).map(part => part.text || '').join('');
   if (!text) throw new Error('チラシから情報を読み取れませんでした。手入力してください。');
   let parsed = JSON.parse(text);
   if (Array.isArray(parsed)) parsed = parsed[0] || {};
@@ -109,8 +150,88 @@ function analyzeFlyer(file) {
     startTime: normalizeTime_(parsed.startTime),
     endTime: normalizeTime_(parsed.endTime),
     location: String(parsed.location || ''),
-    description: String(parsed.description || '')
+    description: String(parsed.description || ''),
+    rotation: normalizeRotation_(parsed.rotation)
   };
+}
+
+function normalizeRotation_(value) {
+  const rotation = Number(value);
+  return [0, 90, 180, 270].includes(rotation) ? rotation : 0;
+}
+
+// 画像を一時スライドに縦横比を保って中央配置し、rotation（時計回り・度）だけ回転して
+// PDF として書き出して保存する。
+function convertImageToPdf_(file, mimeType, rotation) {
+  rotation = normalizeRotation_(rotation);
+  const blob = Utilities.newBlob(Utilities.base64Decode(file.data), mimeType, file.name);
+  const baseName = String(file.name).replace(/\.[^/.]+$/, '') || 'flyer';
+  const presentation = SlidesApp.create('tmp_' + baseName);
+  const tempFile = DriveApp.getFileById(presentation.getId());
+  try {
+    const slide = presentation.getSlides()[0];
+    slide.getPageElements().forEach(element => element.remove());
+    const image = slide.insertImage(blob);
+    const pageWidth = presentation.getPageWidth();
+    const pageHeight = presentation.getPageHeight();
+    // 90°/270° 回転では見た目の幅と高さが入れ替わるので、回転後の外形がページに収まるよう縮尺を決める
+    const sideways = rotation === 90 || rotation === 270;
+    const visibleWidth = sideways ? image.getHeight() : image.getWidth();
+    const visibleHeight = sideways ? image.getWidth() : image.getHeight();
+    const scale = Math.min(pageWidth / visibleWidth, pageHeight / visibleHeight);
+    const width = image.getWidth() * scale;
+    const height = image.getHeight() * scale;
+    // left/top は回転前の位置。回転は中心基準なので、中央に置いてから回転すれば中央のまま
+    image.setWidth(width).setHeight(height)
+      .setLeft((pageWidth - width) / 2).setTop((pageHeight - height) / 2);
+    if (rotation) image.setRotation(rotation);
+    presentation.saveAndClose();
+
+    const pdfBlob = tempFile.getAs('application/pdf').setName(baseName + '.pdf');
+    const saved = getUploadFolder_().createFile(pdfBlob);
+    saved.setDescription(FLYER_PDF_MARK);
+    saved.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return saved;
+  } finally {
+    tempFile.setTrashed(true);
+  }
+}
+
+// 解析で作ったPDFを、登録せずに別ファイルへ差し替えたときに片付ける。
+function discardFlyerPdf(fileId) {
+  requireAccess();
+  const file = getFlyerPdf_(fileId);
+  const link = driveDownloadUrl_(file.getId());
+  const sheet = getSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow >= 2) {
+    const links = sheet.getRange(2, 4, lastRow - 1, 1).getValues().map(row => String(row[0]));
+    if (links.includes(link)) return {ok: false};
+  }
+  file.setTrashed(true);
+  return {ok: true};
+}
+
+function getFlyerPdf_(fileId) {
+  let file;
+  try {
+    file = DriveApp.getFileById(String(fileId || ''));
+  } catch (error) {
+    throw new Error('解析時に保存したPDFが見つかりません。ファイルを選び直してください。');
+  }
+  if (file.getDescription() !== FLYER_PDF_MARK || file.isTrashed()) {
+    throw new Error('解析時に保存したPDFが見つかりません。ファイルを選び直してください。');
+  }
+  return file;
+}
+
+function getUploadFolder_() {
+  const folderId = PropertiesService.getScriptProperties().getProperty('DRIVE_FOLDER_ID');
+  return folderId ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder();
+}
+
+function driveDownloadUrl_(fileId) {
+  return 'https://drive.google.com/uc?export=download&id=' + fileId;
 }
 
 function normalizeDate_(value) {
@@ -200,24 +321,18 @@ function registerNews(form) {
   let link = '';
   let uploadedFile = null;
   let calendarResult = null;
-  if (form.file && form.file.data && form.file.name) {
+  if (form.pdfFileId) {
+    // analyzeFlyer で PDF 化・保存済みのファイルを使い、再アップロードしない
+    link = driveDownloadUrl_(getFlyerPdf_(form.pdfFileId).getId());
+  } else if (form.file && form.file.data && form.file.name) {
     const mimeType = String(form.file.mimeType || '').toLowerCase();
     if (mimeType !== 'application/pdf' && !mimeType.startsWith('image/')) {
       throw new Error('PDFまたは画像ファイルを選択してください。');
     }
     const blob = Utilities.newBlob(Utilities.base64Decode(form.file.data), mimeType, form.file.name);
-
-    const folderId = PropertiesService.getScriptProperties().getProperty('DRIVE_FOLDER_ID');
-    let folder;
-    if (folderId) {
-      folder = DriveApp.getFolderById(folderId);
-    } else {
-      folder = DriveApp.getRootFolder();
-    }
-
-    uploadedFile = folder.createFile(blob);
+    uploadedFile = getUploadFolder_().createFile(blob);
     uploadedFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    link = 'https://drive.google.com/uc?export=download&id=' + uploadedFile.getId();
+    link = driveDownloadUrl_(uploadedFile.getId());
   } else if (form.link) {
     link = String(form.link).trim();
   }

@@ -27,7 +27,7 @@
     <input id="content" type="text" maxlength="200" placeholder="例：3月 公園清掃のお知らせ" required>
     <label for="pdf">チラシ画像・PDF</label>
     <input id="pdf" class="pdf" type="file" accept="image/*,application/pdf">
-    <p class="hint">選ぶとGeminiがタイトル・開催日・場所を読み取ります。解析結果を確認してから登録してください。画像/PDFは解析のためGeminiへ送信されます（10MB以下）。</p>
+    <p class="hint">選ぶとGeminiがタイトル・開催日・場所を読み取ります。画像は向きを自動で補正してPDFに変換し、Driveへ保存してリンク欄に自動で入ります。解析結果を確認してから登録してください。画像/PDFは解析のためGeminiへ送信されます（10MB以下）。</p>
     <div id="analysis-message" class="analysis" role="status"></div>
     <div class="row">
       <div><label for="date">開催日</label><input id="date" type="date" required></div>
@@ -58,6 +58,21 @@
   const dateInput=document.getElementById('date');
   dateInput.value=new Date().toLocaleDateString('sv-SE');
   let selectedFilePayload=null;
+  let preparedPdf=null; // analyzeFlyerで保存済みのPDF {id,url}
+  let analyzing=false;
+  let analysisToken=0;
+  const linkInput=document.getElementById('link');
+  const submitButton=document.getElementById('submit');
+
+  function setAnalyzing(value){analyzing=value;submitButton.disabled=value}
+
+  // 登録せずに差し替えた解析済みPDFを片付ける
+  function discardPreparedPdf(){
+    if(!preparedPdf)return;
+    if(linkInput.value.trim()===preparedPdf.url)linkInput.value='';
+    google.script.run.withFailureHandler(()=>{}).discardFlyerPdf(preparedPdf.id);
+    preparedPdf=null;
+  }
 
   function escapeHtml(value){const d=document.createElement('div');d.textContent=value||'';return d.innerHTML}
   function showMessage(text,type){const el=document.getElementById('message');el.className='message '+type;el.textContent=text}
@@ -79,23 +94,49 @@
     }).withFailureHandler(err=>document.getElementById('list').textContent=err.message||String(err)).listNews();
   }
 
-  function readFile(file){
+  // スマホ写真の回転情報（EXIF）を反映した向きで描き直し、長辺を最大3000pxに縮小したJPEGにする。
+  // 描き直すと回転情報に頼らない正しい向きの画像になる。ブラウザが読めない形式ならnullを返す。
+  async function normalizeImage(file){
+    let bitmap;
+    try{bitmap=await createImageBitmap(file,{imageOrientation:'from-image'})}catch(e){return null}
+    try{
+      const scale=Math.min(1,3000/Math.max(bitmap.width,bitmap.height));
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.round(bitmap.width*scale);
+      canvas.height=Math.round(bitmap.height*scale);
+      const ctx=canvas.getContext('2d');
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.9));
+      if(!blob)return null;
+      return {blob,name:(file.name.replace(/\.[^/.]+$/,'')||'flyer')+'.jpg',mimeType:'image/jpeg'};
+    }finally{bitmap.close()}
+  }
+
+  async function readFile(file){
+    if(!file)return null;
+    let mimeType=file.type||(file.name.toLowerCase().endsWith('.pdf')?'application/pdf':'image/jpeg');
+    if(mimeType!=='application/pdf'&&!mimeType.startsWith('image/'))throw new Error('画像またはPDFを選択してください。');
+    let blob=file,name=file.name;
+    if(mimeType.startsWith('image/')){
+      const normalized=await normalizeImage(file);
+      if(normalized)({blob,name,mimeType}=normalized);
+    }
+    if(blob.size>10*1024*1024)throw new Error('ファイルは10MB以下にしてください。');
     return new Promise((resolve,reject)=>{
-      if(!file){resolve(null);return}
-      const mimeType=file.type||(file.name.toLowerCase().endsWith('.pdf')?'application/pdf':'image/jpeg');
-      if(mimeType!=='application/pdf'&&!mimeType.startsWith('image/')){reject(new Error('画像またはPDFを選択してください。'));return}
-      if(file.size>10*1024*1024){reject(new Error('ファイルは10MB以下にしてください。'));return}
       const reader=new FileReader();
-      reader.onload=()=>resolve({name:file.name,mimeType:mimeType,data:String(reader.result).split(',')[1]});
+      reader.onload=()=>resolve({name,mimeType,data:String(reader.result).split(',')[1]});
       reader.onerror=()=>reject(new Error('ファイルを読み込めませんでした。'));
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(blob);
     });
   }
 
   async function analyzeSelectedFlyer(){
     const file=document.getElementById('pdf').files[0];
-    if(!file){selectedFilePayload=null;return}
+    const token=++analysisToken;
+    discardPreparedPdf();
     const status=document.getElementById('analysis-message');
+    if(!file){selectedFilePayload=null;status.textContent='';setAnalyzing(false);return}
     dateInput.value='';
     document.getElementById('end-date').value='';
     document.getElementById('start-time').value='';
@@ -104,9 +145,21 @@
     document.getElementById('location').value='';
     document.getElementById('description').value='';
     status.className='analysis';status.textContent='チラシを解析しています...';
+    setAnalyzing(true);
     try{
       selectedFilePayload=await readFile(file);
+      if(token!==analysisToken)return;
       google.script.run.withSuccessHandler(result=>{
+        if(token!==analysisToken){
+          // 解析中に別のファイルへ差し替えられた場合、古い結果は捨てる
+          if(result.pdfFileId)google.script.run.withFailureHandler(()=>{}).discardFlyerPdf(result.pdfFileId);
+          return;
+        }
+        setAnalyzing(false);
+        if(result.pdfFileId){
+          preparedPdf={id:result.pdfFileId,url:result.pdfUrl};
+          linkInput.value=result.pdfUrl;
+        }
         if(result.title)document.getElementById('content').value=result.title;
         if(result.startDate)dateInput.value=result.startDate;
         if(result.endDate)document.getElementById('end-date').value=result.endDate;
@@ -116,14 +169,28 @@
         if(result.description)document.getElementById('description').value=result.description;
         const category=document.getElementById('category');
         if(Array.from(category.options).some(option=>option.value===result.category))category.value=result.category;
-        status.className='analysis ok';
-        status.textContent=result.startDate?'解析しました。内容を確認・修正してください。':'タイトルを解析しましたが、開催日は読み取れませんでした。日付を入力してください。';
-      }).withFailureHandler(error=>{status.className='analysis error';status.textContent=error.message||String(error)}).analyzeFlyer(selectedFilePayload);
-    }catch(error){status.className='analysis error';status.textContent=error.message||String(error)}
+        const notes=[];
+        if(result.analysisError)notes.push('解析できませんでした（'+result.analysisError+'）。内容を手入力してください。');
+        else notes.push(result.startDate?'解析しました。内容を確認・修正してください。':'タイトルを解析しましたが、開催日は読み取れませんでした。日付を入力してください。');
+        if(result.pdfFileId)notes.push((result.rotation?'向きを補正（時計回りに'+result.rotation+'°回転）して、':'')+'PDF「'+result.pdfFileName+'」をDriveに保存し、リンク欄に入力しました。PDFの向きもご確認ください。');
+        if(result.pdfError)notes.push(result.pdfError);
+        status.className='analysis '+(result.analysisError?'error':'ok');
+        status.textContent=notes.join(' ');
+      }).withFailureHandler(error=>{
+        if(token!==analysisToken)return;
+        setAnalyzing(false);
+        status.className='analysis error';status.textContent=error.message||String(error);
+      }).analyzeFlyer(selectedFilePayload);
+    }catch(error){
+      if(token!==analysisToken)return;
+      setAnalyzing(false);
+      status.className='analysis error';status.textContent=error.message||String(error);
+    }
   }
 
   async function register(){
-    const button=document.getElementById('submit');
+    const button=submitButton;
+    if(analyzing){showMessage('チラシの解析が終わるまでお待ちください。','error');return}
     button.disabled=true;
     showMessage('登録しています...','');
     try{
@@ -132,8 +199,12 @@
       const content=document.getElementById('content').value.trim();
       const link=document.getElementById('link').value.trim();
       if(!date||!category||!content) throw new Error('日付、カテゴリ、タイトルを入力してください。');
-      const file=selectedFilePayload;
-      const form={date,category,content,link,file,endDate:document.getElementById('end-date').value,startTime:document.getElementById('start-time').value,endTime:document.getElementById('end-time').value,location:document.getElementById('location').value.trim(),description:document.getElementById('description').value.trim(),addToCalendar:document.getElementById('add-to-calendar').checked};
+      // 解析時に保存したPDFがリンク欄にそのまま入っていれば、そのファイルを使い再アップロードしない
+      const usePreparedPdf=!!preparedPdf&&link===preparedPdf.url;
+      // PDF保存済みならリンク欄を書き換えた場合も元画像は送らない（二重保存防止）
+      const file=preparedPdf?null:selectedFilePayload;
+      const pdfFileId=usePreparedPdf?preparedPdf.id:'';
+      const form={date,category,content,link,file,pdfFileId,endDate:document.getElementById('end-date').value,startTime:document.getElementById('start-time').value,endTime:document.getElementById('end-time').value,location:document.getElementById('location').value.trim(),description:document.getElementById('description').value.trim(),addToCalendar:document.getElementById('add-to-calendar').checked};
       google.script.run.withSuccessHandler(result=>{
         showMessage(result.calendarRegistered?'お知らせとカレンダーに登録しました。':'お知らせを登録しました。','ok');
         document.getElementById('content').value='';
@@ -144,7 +215,9 @@
         document.getElementById('end-time').value='';
         document.getElementById('location').value='';
         document.getElementById('description').value='';
+        document.getElementById('analysis-message').textContent='';
         selectedFilePayload=null;
+        preparedPdf=null;
         button.disabled=false;
         loadList();
       }).withFailureHandler(err=>{
