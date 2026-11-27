@@ -47,6 +47,7 @@
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
     <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="data/kairan.js"></script>
 </head>
 <body>
 
@@ -111,7 +112,7 @@
                 <ul class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <li><span class="tile is-soon"><span class="ico"><i data-lucide="landmark"></i></span><span class="label">町会の歴史／あゆみ</span><span class="soon">準備中</span></span></li>
                     <li><a class="tile" href="#calendar"><span class="ico"><i data-lucide="calendar-days"></i></span><span class="label">年間行事一覧</span></a></li>
-                    <li><span class="tile is-soon"><span class="ico"><i data-lucide="file-text"></i></span><span class="label"><span id="kairan-month">今月</span>の回覧／配布書類</span><span class="soon">準備中</span></span></li>
+                    <li><a class="tile" href="kairan.html"><span class="ico"><i data-lucide="file-text"></i></span><span class="label"><span id="kairan-month">最新</span>の回覧／配布書類</span></a></li>
                     <li><a class="tile" href="#news"><span class="ico"><i data-lucide="megaphone"></i></span><span class="label">お知らせ／各部の活動紹介</span></a></li>
                     <li><span class="tile is-soon"><span class="ico"><i data-lucide="users"></i></span><span class="label">クラブ／サークル紹介</span><span class="soon">準備中</span></span></li>
                     <li><span class="tile is-soon"><span class="ico"><i data-lucide="store"></i></span><span class="label">地域のお店／会社紹介</span><span class="soon">準備中</span></span></li>
@@ -133,6 +134,16 @@
                 <section id="links" class="scroll-mt-28" aria-label="外部リンク">
                     <p class="eyebrow px-1">LINKS</p>
                     <h2 class="font-round font-bold text-2xl md:text-3xl mt-1 mb-4 px-1">便利なリンク</h2>
+                    <div id="gomi-card" class="card p-4 mb-4" hidden>
+                        <div class="flex items-center gap-3">
+                            <span class="grid place-items-center w-10 h-10 rounded-xl bg-[#fff4c2] text-[#8a6a00]"><i data-lucide="trash-2" class="w-5 h-5"></i></span>
+                            <span class="font-bold leading-snug">ごみ収集日カレンダー<span id="gomi-month" class="block text-xs font-medium text-[var(--muted)]"></span></span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <a id="gomi-ja" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center min-h-[44px] rounded-full bg-[var(--green)] text-white text-sm font-bold hover:bg-[var(--green-dark)] transition">日本語</a>
+                            <a id="gomi-zh" lang="zh" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center min-h-[44px] rounded-full bg-[var(--green)] text-white text-sm font-bold hover:bg-[var(--green-dark)] transition">中文</a>
+                        </div>
+                    </div>
                     <ul class="card p-3">
                         <li><a class="link-item" href="https://www.city.kawaguchi.lg.jp/" target="_blank" rel="noopener noreferrer"><span class="ico"><i data-lucide="building-2"></i></span>川口市ホームページ<i data-lucide="arrow-up-right" class="ext"></i></a></li>
                         <li><a class="link-item" href="https://www.city.kawaguchi.lg.jp/kurashi_tetsuzuki/gomi_risaikuru/2/index.html" target="_blank" rel="noopener noreferrer"><span class="ico"><i data-lucide="recycle"></i></span>川口市ごみの分別ガイド<i data-lucide="arrow-up-right" class="ext"></i></a></li>
@@ -318,7 +329,20 @@
                 document.getElementById('photo-month').textContent = month + '月の北町';
             };
             monthly.src = 'images/top/' + String(month).padStart(2, '0') + '.jpg';
-            document.getElementById('kairan-month').textContent = month + '月';
+        }
+
+        // 回覧・ごみ収集日カレンダー：data/kairan.js の先頭（最新月）を表示
+        function setupKairan() {
+            const latest = (window.KITACHO_KAIRAN || [])[0];
+            if (!latest) return;
+            document.getElementById('kairan-month').textContent = Number(latest.month.slice(5)) + '月';
+            if (!latest.gomi) return;
+            document.getElementById('gomi-month').textContent = latest.label + '版';
+            ['ja', 'zh'].forEach(key => {
+                const link = document.getElementById('gomi-' + key);
+                if (latest.gomi[key]) link.href = latest.gomi[key]; else link.hidden = true;
+            });
+            document.getElementById('gomi-card').hidden = false;
         }
 
         // 管理者用リンクの表示切替（このブラウザだけに保存。管理画面自体はGoogleログインで保護）
@@ -336,6 +360,7 @@
             setupAdminLink();
             if (window.lucide) lucide.createIcons();
             setupMonthly();
+            setupKairan();
             fetchNews();
         });
     </script>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>回覧／配布書類 | 西川口 北町町内会</title>
+    <meta name="theme-color" content="#2f7d4f">
+    <meta name="description" content="西川口北町町内会の回覧・配布書類とごみ収集日カレンダーを月ごとに掲載しています。">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap');
+        :root { --green: #2f7d4f; --green-dark: #1d5236; --green-soft: #e8f3ec; --cream: #fffbea; --sky: #eaf6fb; --ink: #1f2a24; --muted: #66736b; }
+        body { font-family: 'Noto Sans JP', sans-serif; background: #f5f6f1; color: var(--ink); -webkit-font-smoothing: antialiased; }
+        .font-round { font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif; }
+        .card { background: #fff; border-radius: 1.25rem; box-shadow: 0 1px 2px rgba(31,42,36,.04), 0 8px 24px rgba(31,42,36,.06); }
+        .eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .2em; color: var(--green); }
+        .doc { display: flex; align-items: center; gap: .9rem; min-height: 60px; padding: .75rem 1rem; border-radius: 1rem; transition: background .2s; }
+        .doc:hover { background: var(--cream); }
+        .doc .ico { flex: none; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: .8rem; }
+        .doc .ico svg { width: 1.15rem; height: 1.15rem; }
+        .doc.is-pdf .ico { background: #fde8e4; color: #b4412b; }
+        .doc.is-link .ico { background: #d9f0f8; color: #1b6f8c; }
+        .badge { font-size: .65rem; font-weight: 700; border-radius: 999px; padding: .1rem .55rem; white-space: nowrap; }
+        .is-pdf .badge { background: #fde8e4; color: #9a3522; }
+        .is-link .badge { background: #d9f0f8; color: #155a72; }
+        .month-chip { display: inline-flex; align-items: center; min-height: 40px; padding: .4rem 1rem; border-radius: 999px; font-size: .85rem; font-weight: 700; background: #fff; border: 1px solid rgba(0,0,0,.08); }
+        .month-chip:hover { background: var(--green-soft); }
+    </style>
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="data/kairan.js"></script>
+</head>
+<body>
+    <header class="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-black/5">
+        <div class="max-w-4xl mx-auto flex items-center gap-3 px-4 py-3 md:py-4">
+            <a href="index.html" class="flex items-center gap-3" aria-label="西川口 北町町内会 トップへ">
+                <span class="grid place-items-center w-9 h-9 md:w-10 md:h-10 rounded-xl bg-[var(--green)] text-white font-round font-bold">北</span>
+                <span>
+                    <span class="block font-round font-bold text-lg md:text-xl leading-tight">西川口 北町町内会</span>
+                    <span class="block text-[11px] md:text-xs text-[var(--muted)]">みんなでつくる 安心・安全な北町</span>
+                </span>
+            </a>
+            <a href="index.html" class="ml-auto inline-flex items-center gap-1 min-h-[44px] px-3 text-sm font-bold text-[var(--green)] hover:text-[var(--green-dark)]"><i data-lucide="arrow-left" class="w-4 h-4"></i>トップへ</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-10">
+        <p class="eyebrow px-1">CIRCULARS</p>
+        <h1 class="font-round font-bold text-2xl md:text-3xl mt-1 px-1">回覧／配布書類</h1>
+        <p class="text-sm text-[var(--muted)] mt-3 px-1 leading-relaxed">
+            回覧板で配布した書類を月ごとに掲載しています。<span class="badge inline-block align-middle" style="background:#d9f0f8;color:#155a72">公式サイト</span> は発行元のホームページ、
+            <span class="badge inline-block align-middle" style="background:#fde8e4;color:#9a3522">PDF</span> はこのサイトに掲載した書類です（どちらも新しいタブで開きます）。
+        </p>
+        <nav id="month-nav" class="flex flex-wrap gap-2 mt-6 px-1" aria-label="月の一覧"></nav>
+        <div id="months" class="mt-8 space-y-12"></div>
+    </main>
+
+    <footer class="mt-10 bg-[#163d29] text-white/50">
+        <p class="text-center text-[10px] tracking-widest py-8">&copy; 2026 NISHIKAWAGUCHI KITACHO CHONAIKAI</p>
+    </footer>
+
+    <script>
+        function el(tag, className, text) {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text) node.textContent = text;
+            return node;
+        }
+
+        function icon(name, className) {
+            const i = document.createElement('i');
+            i.setAttribute('data-lucide', name);
+            if (className) i.setAttribute('class', className);
+            return i;
+        }
+
+        function docLink(item) {
+            const isPdf = item.type === 'pdf';
+            const a = el('a', 'doc ' + (isPdf ? 'is-pdf' : 'is-link'));
+            a.href = item.url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            const ico = el('span', 'ico');
+            ico.appendChild(icon(isPdf ? 'file-text' : 'globe'));
+            const body = el('span', 'flex-1 min-w-0');
+            body.append(el('span', 'block font-bold text-sm md:text-base leading-snug', item.title), el('span', 'block text-xs text-[var(--muted)] mt-0.5', item.issuer));
+            a.append(ico, body, el('span', 'badge', isPdf ? 'PDF' : '公式サイト'));
+            return a;
+        }
+
+        function render() {
+            const data = window.KITACHO_KAIRAN || [];
+            const nav = document.getElementById('month-nav');
+            const months = document.getElementById('months');
+            data.forEach((month, index) => {
+                const chip = el('a', 'month-chip', month.label + (index === 0 ? '（最新）' : ''));
+                chip.href = '#m' + month.month;
+                nav.appendChild(chip);
+
+                const section = el('section', 'scroll-mt-24');
+                section.id = 'm' + month.month;
+                section.appendChild(el('h2', 'font-round font-bold text-xl md:text-2xl px-1', month.label + 'の回覧'));
+
+                if (month.gomi) {
+                    const gomi = el('div', 'card mt-4 p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-3');
+                    const title = el('div', 'flex items-center gap-3 flex-1');
+                    const ico = el('span', 'grid place-items-center w-10 h-10 rounded-xl bg-[#fff4c2] text-[#8a6a00]');
+                    ico.appendChild(icon('trash-2', 'w-5 h-5'));
+                    title.append(ico, el('span', 'font-bold', 'ごみ収集日カレンダー（' + month.label + '）'));
+                    const buttons = el('div', 'flex gap-2');
+                    [['ja', '日本語'], ['zh', '中文']].forEach(([key, label]) => {
+                        if (!month.gomi[key]) return;
+                        const b = el('a', 'inline-flex items-center min-h-[44px] px-5 rounded-full bg-[var(--green)] text-white text-sm font-bold hover:bg-[var(--green-dark)]', label);
+                        b.href = month.gomi[key];
+                        b.target = '_blank';
+                        b.rel = 'noopener noreferrer';
+                        if (key === 'zh') b.lang = 'zh';
+                        buttons.appendChild(b);
+                    });
+                    gomi.append(title, buttons);
+                    section.appendChild(gomi);
+                }
+
+                month.groups.forEach(group => {
+                    section.appendChild(el('h3', 'text-sm font-bold text-[var(--muted)] mt-6 mb-2 px-1', group.name));
+                    const list = el('ul', 'card p-2');
+                    group.items.forEach(item => {
+                        const li = el('li');
+                        li.appendChild(docLink(item));
+                        list.appendChild(li);
+                    });
+                    section.appendChild(list);
+                });
+                months.appendChild(section);
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.addEventListener('DOMContentLoaded', render);
+    </script>
+</body>
+</html>
