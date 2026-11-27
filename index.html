@@ -4,18 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>西川口 北町町内会 公式サイト</title>
-    <meta name="theme-color" content="#0068b7">
+    <meta name="theme-color" content="#2f7d4f">
     <meta name="description" content="川口市西川口北町町内会のお知らせ、行事カレンダー、防災情報を掲載しています。">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .header-gradient { background: linear-gradient(135deg, #0068b7 0%, #004a82 100%); }
-        .section-title-green { border-left: 6px solid #2d6a4f; background: #f0fff4; padding: 10px 15px; font-weight: bold; }
-        .section-title-blue { border-left: 6px solid #0068b7; background: #ebf8ff; padding: 10px 15px; font-weight: bold; }
-        .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 50; background: #fff; color: #004a82; padding: .75rem 1rem; border-radius: .5rem; font-weight: bold; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap');
+        :root { --green: #2f7d4f; --green-dark: #1d5236; --green-soft: #e8f3ec; --cream: #fffbea; --sky: #eaf6fb; --ink: #1f2a24; --muted: #66736b; }
+        body { font-family: 'Noto Sans JP', sans-serif; background: #f5f6f1; color: var(--ink); -webkit-font-smoothing: antialiased; }
+        .font-round { font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif; }
+        .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 60; background: #fff; color: var(--green-dark); padding: .75rem 1rem; border-radius: .75rem; font-weight: bold; }
         .skip-link:focus { top: 1rem; }
-        /* カレンダーのレスポンシブ枠 */
+        .card { background: #fff; border-radius: 1.25rem; box-shadow: 0 1px 2px rgba(31,42,36,.04), 0 8px 24px rgba(31,42,36,.06); }
+        .eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .2em; color: var(--green); }
+        .menu-item { display: flex; align-items: center; gap: .75rem; min-height: 56px; padding: .65rem .9rem; border-radius: 1rem; font-weight: 700; color: var(--ink); transition: background .2s, transform .2s; }
+        a.menu-item:hover { background: var(--cream); transform: translateX(2px); }
+        .menu-item .ico { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: .75rem; background: #fff4c2; color: #8a6a00; }
+        .menu-item .ico svg, .link-item .ico svg { width: 1.1rem; height: 1.1rem; }
+        .menu-item .label { flex: 1; font-size: .95rem; }
+        .menu-item .chev { color: #b5bdb7; width: 1rem; height: 1rem; }
+        .menu-item.is-soon { color: #8a958e; cursor: default; }
+        .menu-item.is-soon .ico { background: #f1f2ee; color: #a3aca6; }
+        .soon { font-size: .65rem; font-weight: 700; color: #8a958e; background: #f1f2ee; border-radius: 999px; padding: .15rem .55rem; white-space: nowrap; }
+        .tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; height: 100%; min-height: 7.5rem; padding: 1rem .6rem; border-radius: 1rem; background: #fafbf7; text-align: center; font-weight: 700; font-size: .85rem; line-height: 1.4; color: var(--ink); transition: background .2s, transform .2s, box-shadow .2s; }
+        a.tile:hover { background: var(--cream); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(31,42,36,.08); }
+        .tile .ico { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: .9rem; background: #fff4c2; color: #8a6a00; }
+        .tile .ico svg { width: 1.3rem; height: 1.3rem; }
+        .tile.is-soon { color: #8a958e; cursor: default; }
+        .tile.is-soon .ico { background: #f1f2ee; color: #a3aca6; }
+        .tile .soon { position: absolute; top: .5rem; right: .5rem; font-size: .6rem; padding: .1rem .45rem; }
+        .link-item { display: flex; align-items: center; gap: .75rem; min-height: 52px; padding: .6rem .9rem; border-radius: 1rem; font-weight: 700; font-size: .9rem; color: #134a5e; transition: background .2s; }
+        .link-item:hover { background: var(--sky); }
+        .link-item .ico { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: .75rem; background: #d9f0f8; color: #1b6f8c; }
+        .link-item .ext { margin-left: auto; width: .9rem; height: .9rem; color: #9fb7c0; }
         .calendar-container { position: relative; padding-bottom: 75%; height: 0; overflow: hidden; }
         @media (min-width: 768px) { .calendar-container { padding-bottom: 65%; } }
         .calendar-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -23,159 +43,140 @@
             .mobile-section-link { min-height: 44px; }
             .calendar-container { height: 420px; padding-bottom: 0; }
         }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
     <a class="skip-link" href="#main">本文へ移動</a>
 
-    <header class="header-gradient text-white py-8 shadow-lg">
-        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-            <div class="text-center md:text-left">
-                <h1 class="text-3xl md:text-4xl font-bold italic tracking-wider">西川口 北町町内会</h1>
-                <p class="text-sm opacity-90 mt-2 font-medium">〜みんなでつくる 安心・安全な北町〜（川口市）</p>
-            </div>
-            <div class="mt-6 md:mt-0 bg-white/20 backdrop-blur-sm p-3 rounded-lg border border-white/30 text-xs md:text-sm">
-                並木小学校校区の住民自治組織です
-            </div>
+    <!-- ヘッダー（PC・スマホ共通） -->
+    <header class="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-black/5">
+        <div class="max-w-6xl mx-auto flex items-center gap-3 px-4 py-3 md:py-4">
+            <a href="#" class="flex items-center gap-3" aria-label="西川口 北町町内会 トップへ">
+                <span class="grid place-items-center w-9 h-9 md:w-10 md:h-10 rounded-xl bg-[var(--green)] text-white font-round font-bold">北</span>
+                <span>
+                    <span class="block font-round font-bold text-lg md:text-xl leading-tight">西川口 北町町内会</span>
+                    <span class="block text-[11px] md:text-xs text-[var(--muted)]">みんなでつくる 安心・安全な北町</span>
+                </span>
+            </a>
+            <nav class="hidden md:flex items-center gap-1 ml-auto text-sm font-bold" aria-label="ヘッダーメニュー">
+                <a href="#news" class="px-4 py-2 rounded-full text-[var(--muted)] hover:text-[var(--ink)] hover:bg-black/5 transition">新着情報</a>
+                <a href="#calendar" class="px-4 py-2 rounded-full text-[var(--muted)] hover:text-[var(--ink)] hover:bg-black/5 transition">今月の予定</a>
+                <a href="#join" class="ml-2 px-5 py-2.5 rounded-full bg-[var(--green)] text-white hover:bg-[var(--green-dark)] transition">町会加入のご案内</a>
+            </nav>
         </div>
+        <nav class="md:hidden grid grid-cols-4 border-t border-black/5" aria-label="クイックメニュー">
+            <a href="#news" class="mobile-section-link flex items-center justify-center text-xs font-bold text-[var(--muted)]">新着情報</a>
+            <a href="#calendar" class="mobile-section-link flex items-center justify-center text-xs font-bold text-[var(--muted)]">今月の予定</a>
+            <a href="#menu" class="mobile-section-link flex items-center justify-center text-xs font-bold text-[var(--muted)]">メニュー</a>
+            <a href="#links" class="mobile-section-link flex items-center justify-center text-xs font-bold text-[var(--muted)]">リンク</a>
+        </nav>
     </header>
 
-    <nav class="md:hidden sticky top-0 z-40 bg-white/95 border-b border-slate-200 backdrop-blur" aria-label="クイックメニュー">
-        <div class="grid grid-cols-4 px-1">
-            <a href="#news" class="mobile-section-link flex items-center justify-center px-1 py-3 text-xs font-bold text-slate-700">お知らせ</a>
-            <a href="#calendar" class="mobile-section-link flex items-center justify-center px-1 py-3 text-xs font-bold text-slate-700">行事</a>
-            <a href="#projects" class="mobile-section-link flex items-center justify-center px-1 py-3 text-xs font-bold text-slate-700">事業</a>
-            <a href="#safety" class="mobile-section-link flex items-center justify-center px-1 py-3 text-xs font-bold text-red-700">防災</a>
-        </div>
-    </nav>
+    <main id="main">
 
-    <div class="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
-        
-        <aside class="md:w-1/4 space-y-6 order-2 md:order-1">
-            
-            <nav class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200" aria-label="ページ内メニュー">
-                <div class="bg-blue-700 text-white px-4 py-3 text-sm font-bold tracking-widest text-center">MENU</div>
-                <ul class="divide-y divide-slate-100 font-medium">
-                    <li><a href="#news" class="block px-4 py-3 hover:bg-blue-50 text-sm transition">📢 最新情報・お知らせ</a></li>
-                    <li><a href="#calendar" class="block px-4 py-3 hover:bg-blue-50 text-sm transition">📅 行事カレンダー</a></li>
-                    <li><a href="#projects" class="block px-4 py-3 hover:bg-blue-50 text-sm transition">📋 主な事業内容</a></li>
-                    <li><a href="#safety" class="block px-4 py-3 hover:bg-blue-50 text-sm transition text-red-600">🚨 防災・安全情報</a></li>
+        <!-- 画面幅いっぱいの月替わり写真 -->
+        <section class="relative h-[26rem] md:h-[34rem] overflow-hidden" aria-label="今月の写真">
+            <img id="monthly-photo" src="images/top/default.jpg" alt="西川口駅西口の風景" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-black/5"></div>
+            <div class="absolute inset-0">
+                <div class="max-w-6xl mx-auto h-full px-4 flex flex-col justify-center pb-16 text-white">
+                    <span id="photo-month" class="self-start text-[11px] font-bold tracking-widest bg-white/20 backdrop-blur rounded-full px-3 py-1">WELCOME</span>
+                    <h1 class="font-round font-bold text-3xl md:text-5xl leading-tight mt-4 drop-shadow">住みよい街、<br>西川口北町へようこそ</h1>
+                    <p class="mt-4 text-sm md:text-base text-white/85 max-w-md">並木小学校区の住民自治組織です。行事やお知らせ、地域の暮らしに役立つ情報をお届けします。</p>
+                    <div class="flex flex-wrap gap-3 mt-6">
+                        <a href="#news" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white text-[var(--ink)] text-sm font-bold hover:bg-white/90 transition">新着情報を見る<i data-lucide="arrow-down" class="w-4 h-4"></i></a>
+                        <a href="#calendar" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/15 border border-white/40 backdrop-blur text-white text-sm font-bold hover:bg-white/25 transition">今月の予定</a>
+                    </div>
+                </div>
+            </div>
+            <p id="photo-credit" class="absolute bottom-20 md:bottom-24 right-3 text-[10px] text-white/90 bg-black/35 backdrop-blur rounded-full px-3 py-1">
+                写真：<a href="https://commons.wikimedia.org/wiki/File:Nishi-Kawaguchi-STA_West.jpg" target="_blank" rel="noopener noreferrer" class="underline">MaedaAkihiko</a>
+                / <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja" target="_blank" rel="noopener noreferrer" class="underline">CC BY-SA 4.0</a>
+            </p>
+        </section>
+
+        <div class="max-w-6xl mx-auto px-4">
+
+            <!-- メニュー：写真に少し重ねたタイル -->
+            <nav id="menu" aria-label="町会メニュー" class="card relative -mt-16 p-4 md:p-6 scroll-mt-28">
+                <p class="eyebrow px-1 pb-3">MENU</p>
+                <ul class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <li><span class="tile is-soon"><span class="ico"><i data-lucide="landmark"></i></span><span class="label">町会の歴史／あゆみ</span><span class="soon">準備中</span></span></li>
+                    <li><a class="tile" href="#calendar"><span class="ico"><i data-lucide="calendar-days"></i></span><span class="label">年間行事一覧</span></a></li>
+                    <li><span class="tile is-soon"><span class="ico"><i data-lucide="file-text"></i></span><span class="label"><span id="kairan-month">今月</span>の回覧／配布書類</span><span class="soon">準備中</span></span></li>
+                    <li><a class="tile" href="#news"><span class="ico"><i data-lucide="megaphone"></i></span><span class="label">お知らせ／各部の活動紹介</span></a></li>
+                    <li><span class="tile is-soon"><span class="ico"><i data-lucide="users"></i></span><span class="label">クラブ／サークル紹介</span><span class="soon">準備中</span></span></li>
+                    <li><span class="tile is-soon"><span class="ico"><i data-lucide="store"></i></span><span class="label">地域のお店／会社紹介</span><span class="soon">準備中</span></span></li>
+                    <li><a class="tile" href="#join"><span class="ico"><i data-lucide="heart-handshake"></i></span><span class="label">町会加入のお願い</span></a></li>
                 </ul>
             </nav>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
-                <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase text-center">外部リンク</h4>
-                <a href="https://www.city.kawaguchi.lg.jp/" target="_blank" rel="noopener noreferrer" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-800 py-3 rounded-md text-center font-bold text-sm border border-blue-200 transition">川口市役所 HP</a>
-                <a href="https://www.city.kawaguchi.lg.jp/kurashi_tetsuzuki/gomi_risaikuru/2/index.html" target="_blank" rel="noopener noreferrer" class="block w-full bg-green-50 hover:bg-green-100 text-green-800 py-3 rounded-md text-center font-bold text-sm border border-green-200 transition">ごみ分別ガイド</a>
-                <a href="https://www.city.kawaguchi.lg.jp/soshiki/01010/020/2/2480.html" target="_blank" rel="noopener noreferrer" class="block w-full bg-orange-50 hover:bg-orange-100 text-orange-800 py-3 rounded-md text-center font-bold text-sm border border-orange-200 transition">広報かわぐち</a>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center">
-                <p class="text-[10px] font-bold text-slate-400 mb-3 tracking-widest uppercase">Mobile Access</p>
-                <div class="bg-slate-50 border-2 border-slate-200 rounded-lg aspect-square flex items-center justify-center p-3">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fnemotokatsumi.github.io%2Fkitacho-hp%2F" alt="北町町内会ホームページのQRコード" class="w-full h-full object-contain">
-                </div>
-                <p class="text-[10px] text-slate-400 mt-3 leading-relaxed">スマホからでも<br>最新情報が確認できます</p>
-            </div>
-        </aside>
-
-        <main id="main" class="md:w-3/4 space-y-12 order-1 md:order-2">
-            
-            <section class="rounded-2xl overflow-hidden shadow-md h-48 md:h-72 relative border-4 border-white">
-                <img src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&q=80&w=1200" alt="北町の風景" class="w-full h-full object-cover">
-                <div class="absolute bottom-0 bg-gradient-to-t from-black/70 to-transparent text-white p-6 w-full">
-                    <p class="text-lg font-bold">住みよい街、西川口北町へようこそ</p>
-                </div>
-            </section>
-
-            <section id="news">
-                <h3 class="section-title-green text-xl mb-4 text-green-900">町内会からの新着情報</h3>
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div id="news-list" class="divide-y divide-slate-100">
-                        <p class="p-10 text-center text-slate-400 animate-pulse">お知らせを読み込み中...</p>
-                    </div>
-                </div>
-            </section>
-
-            <section id="calendar">
-                <h3 class="section-title-blue text-xl mb-4 text-blue-900">行事カレンダー</h3>
-                <div class="bg-white p-1 rounded-xl border border-slate-200 shadow-md overflow-hidden">
-                    <div class="calendar-container">
-                        <iframe 
-                            src="https://calendar.google.com/calendar/embed?src=kitacho.nishikawaguchi%40gmail.com&ctz=Asia%2FTokyo&mode=MONTH&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0" 
-                            style="border:0" 
-                            title="北町町内会 行事カレンダー"
-                            loading="lazy"
-                            frameborder="0"
-                            scrolling="no">
-                        </iframe>
-                    </div>
-                </div>
-                <p class="text-[10px] text-slate-400 mt-2 ml-2">※予定は変更になる場合があります。詳細は町内会だよりをご確認ください。</p>
-                <a href="https://calendar.google.com/calendar/embed?src=kitacho.nishikawaguchi%40gmail.com&ctz=Asia%2FTokyo&mode=MONTH&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0" target="_blank" rel="noopener noreferrer" class="inline-flex items-center mt-3 min-h-[44px] px-4 text-sm font-bold text-blue-700 hover:text-blue-900">
-                    Googleカレンダーで見る ›
-                </a>
-            </section>
-
-            <section id="projects">
-                <h3 class="section-title-blue text-xl mb-4 text-blue-900">主な事業内容</h3>
-                <div class="bg-white p-8 rounded-xl border border-slate-200 shadow-sm grid md:grid-cols-2 gap-8">
-                    <div class="space-y-4">
-                        <h4 class="font-bold border-b pb-1 text-slate-700">年間行事</h4>
-                        <ul class="text-sm space-y-2 text-slate-600">
-                            <li>・春の一斉清掃、夏祭り</li>
-                            <li>・防災訓練、秋のレクリエーション</li>
-                            <li>・敬老お祝い会、もちつき大会</li>
-                        </ul>
-                    </div>
-                    <div class="space-y-4">
-                        <h4 class="font-bold border-b pb-1 text-slate-700">町内会だより（PDF）</h4>
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between bg-slate-50 p-3 rounded text-xs border border-slate-100" aria-label="令和8年4月号は準備中">
-                                <span>📄 北町町内会だより 令和8年4月号</span>
-                                <span class="text-slate-500 font-bold">準備中</span>
-                            </div>
-                            <div class="flex items-center justify-between bg-slate-50 p-3 rounded text-xs border border-slate-100" aria-label="令和8年3月号は準備中">
-                                <span>📄 北町町内会だより 令和8年3月号</span>
-                                <span class="text-slate-500 font-bold">準備中</span>
-                            </div>
+            <!-- 新着情報 ＋ 便利なリンク -->
+            <div class="grid lg:grid-cols-3 gap-8 mt-14">
+                <section id="news" class="lg:col-span-2 scroll-mt-28">
+                    <p class="eyebrow px-1">NEWS</p>
+                    <h2 class="font-round font-bold text-2xl md:text-3xl mt-1 mb-4 px-1">新着情報</h2>
+                    <div class="card overflow-hidden">
+                        <div id="news-list" class="divide-y divide-black/5">
+                            <p class="p-10 text-center text-[var(--muted)] animate-pulse">お知らせを読み込み中...</p>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            <section id="safety" class="bg-red-50 p-8 rounded-2xl border-2 border-red-100">
-                <h3 class="text-2xl font-bold text-red-700 mb-6 flex items-center">
-                    <span class="mr-3">⚠️</span> 防災・緊急避難所
-                </h3>
-                <div class="bg-white p-6 rounded-xl shadow-sm mb-6 border-l-8 border-red-500">
-                    <h4 class="font-bold text-lg mb-1">指定緊急避難場所：川口市立並木小学校</h4>
-                    <p class="text-sm text-gray-600">川口市並木2-8-1（当町内会から徒歩圏内）</p>
-                </div>
-                <a href="https://www.city.kawaguchi.lg.jp/soshiki/01040/010/7/1/index.html" target="_blank" rel="noopener noreferrer" class="inline-block bg-red-600 text-white px-8 py-3 rounded-full font-bold hover:bg-red-700 transition shadow-lg">
-                    川口市ハザードマップを見る
-                </a>
-            </section>
-
-        </main>
-    </div>
-
-    <footer class="bg-slate-900 text-slate-400 py-16 px-4">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <div class="text-center md:text-left">
-                <h4 class="text-white text-xl font-bold mb-2">西川口 北町町内会</h4>
-                <p class="text-sm">事務局所在地：町内会館（北町公園隣接）</p>
-                <p class="text-xs mt-4">当サイトは試験運用中です。ご意見は役員までお知らせください。</p>
+                </section>
+                <section id="links" class="scroll-mt-28" aria-label="外部リンク">
+                    <p class="eyebrow px-1">LINKS</p>
+                    <h2 class="font-round font-bold text-2xl md:text-3xl mt-1 mb-4 px-1">便利なリンク</h2>
+                    <ul class="card p-3">
+                        <li><a class="link-item" href="https://www.city.kawaguchi.lg.jp/" target="_blank" rel="noopener noreferrer"><span class="ico"><i data-lucide="building-2"></i></span>川口市ホームページ<i data-lucide="arrow-up-right" class="ext"></i></a></li>
+                        <li><a class="link-item" href="https://www.city.kawaguchi.lg.jp/kurashi_tetsuzuki/gomi_risaikuru/2/index.html" target="_blank" rel="noopener noreferrer"><span class="ico"><i data-lucide="recycle"></i></span>川口市ごみの分別ガイド<i data-lucide="arrow-up-right" class="ext"></i></a></li>
+                        <li><a class="link-item" href="https://www.city.kawaguchi.lg.jp/soshiki/01010/020/2/2480.html" target="_blank" rel="noopener noreferrer"><span class="ico"><i data-lucide="newspaper"></i></span>広報かわぐち一覧表<i data-lucide="arrow-up-right" class="ext"></i></a></li>
+                        <li><a class="link-item" href="https://www.city.kawaguchi.lg.jp/soshiki/01040/010/7/10/2851.html" target="_blank" rel="noopener noreferrer"><span class="ico"><i data-lucide="shield-alert"></i></span>避難場所・避難所一覧<i data-lucide="arrow-up-right" class="ext"></i></a></li>
+                        <li><a class="link-item" href="https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5637.html" target="_blank" rel="noopener noreferrer"><span class="ico"><i data-lucide="stethoscope"></i></span>今月の日曜祝日当番医<i data-lucide="arrow-up-right" class="ext"></i></a></li>
+                        <li><a class="link-item" href="https://www.city.kawaguchi.lg.jp/soshiki/01070/010/minseiiinzidouiin/15075.html" target="_blank" rel="noopener noreferrer"><span class="ico"><i data-lucide="hand-heart"></i></span>民生委員・児童委員<i data-lucide="arrow-up-right" class="ext"></i></a></li>
+                    </ul>
+                </section>
             </div>
-            <div class="text-center md:text-right">
-                <div id="join" class="bg-white/5 p-4 rounded-lg border border-white/10">
-                    <p class="text-white font-bold mb-2">【加入に関するお問い合わせ】</p>
-                    <p class="text-sm italic">近隣の班長、または事務局までご連絡ください</p>
+
+            <!-- 今月の予定 -->
+            <section id="calendar" class="mt-14 scroll-mt-28">
+                <div class="flex items-end justify-between mb-4 px-1">
+                    <div>
+                        <p class="eyebrow">SCHEDULE</p>
+                        <h2 class="font-round font-bold text-2xl md:text-3xl mt-1">今月の予定</h2>
+                    </div>
+                    <a href="https://calendar.google.com/calendar/embed?src=kitacho.nishikawaguchi%40gmail.com&ctz=Asia%2FTokyo&mode=MONTH&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 min-h-[44px] text-sm font-bold text-[var(--green)] hover:text-[var(--green-dark)]">
+                        Googleカレンダー<i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                    </a>
                 </div>
-                <p class="text-[10px] mt-8 tracking-widest">&copy; 2026 NISHIKAWAGUCHI KITACHO CHONAIKAI</p>
+                <div class="card p-2 overflow-hidden">
+                    <div class="calendar-container rounded-xl overflow-hidden">
+                        <iframe src="https://calendar.google.com/calendar/embed?src=kitacho.nishikawaguchi%40gmail.com&ctz=Asia%2FTokyo&mode=MONTH&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0" style="border:0" title="北町町内会 今月の予定" loading="lazy" frameborder="0" scrolling="no"></iframe>
+                    </div>
+                </div>
+                <p class="text-xs text-[var(--muted)] mt-3 px-1">※予定は変更になる場合があります。詳細は回覧・配布書類をご確認ください。</p>
+            </section>
+        </div>
+    </main>
+
+    <footer class="mt-20 bg-[#163d29] text-white/70">
+        <div class="max-w-6xl mx-auto px-4 py-14 grid md:grid-cols-2 gap-10 items-center">
+            <div>
+                <div class="flex items-center gap-3">
+                    <span class="grid place-items-center w-10 h-10 rounded-xl bg-white/10 text-white font-round font-bold">北</span>
+                    <p class="font-round font-bold text-xl text-white">西川口 北町町内会</p>
+                </div>
+                <p class="text-sm mt-4">事務局所在地：町内会館（北町公園隣接）</p>
+                <p class="text-xs mt-2">当サイトは試験運用中です。ご意見は役員までお知らせください。</p>
+            </div>
+            <div id="join" class="scroll-mt-28 rounded-[1.25rem] bg-white/5 border border-white/10 p-6">
+                <p class="eyebrow !text-[#9fd8b4]">JOIN US</p>
+                <p class="font-round font-bold text-lg text-white mt-1">町会への加入のお願い</p>
+                <p class="text-sm mt-2 leading-relaxed">加入に関するお問い合わせは、近隣の班長、または事務局までご連絡ください。</p>
             </div>
         </div>
+        <p class="text-center text-[10px] tracking-widest pb-8 text-white/40">&copy; 2026 NISHIKAWAGUCHI KITACHO CHONAIKAI</p>
     </footer>
 
     <script>
@@ -229,33 +230,33 @@
         function makeNewsItem(date, category, content, link) {
             link = toDriveViewUrl(link);
             const item = document.createElement('article');
-            item.className = "p-5 hover:bg-slate-50 transition flex flex-col md:flex-row md:items-start gap-3 md:gap-6";
+            item.className = "px-5 py-4 md:px-6 hover:bg-[#fafbf7] transition flex flex-col md:flex-row md:items-center gap-2 md:gap-6";
 
             const meta = document.createElement('div');
-            meta.className = "flex items-center gap-3 md:min-w-[170px]";
+            meta.className = "flex items-center gap-3 md:min-w-[180px]";
 
             const dateElement = document.createElement('time');
-            dateElement.className = "text-xs font-bold text-slate-500 font-mono";
+            dateElement.className = "text-xs font-bold text-[var(--muted)] tabular-nums";
             dateElement.textContent = date;
             if (/^\d{4}[.-]\d{2}[.-]\d{2}$/.test(date)) {
                 dateElement.dateTime = date.replace(/[.]/g, '-');
             }
 
             const categoryElement = document.createElement('span');
-            categoryElement.className = "text-[10px] font-bold px-2 py-1 rounded bg-blue-100 text-blue-700 whitespace-nowrap";
+            categoryElement.className = "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[var(--green-soft)] text-[var(--green-dark)] whitespace-nowrap";
             categoryElement.textContent = category;
 
             meta.append(dateElement, categoryElement);
 
             const body = document.createElement('div');
-            body.className = "text-sm md:text-base font-bold text-slate-700 leading-relaxed";
+            body.className = "text-sm md:text-base font-medium leading-relaxed";
 
             if (link) {
                 const anchor = document.createElement('a');
                 anchor.href = link;
                 anchor.target = '_blank';
                 anchor.rel = 'noopener noreferrer';
-                anchor.className = "hover:text-blue-700 underline-offset-4 hover:underline";
+                anchor.className = "hover:text-[var(--green)] underline-offset-4 hover:underline";
                 anchor.textContent = content;
                 body.appendChild(anchor);
             } else {
@@ -278,7 +279,7 @@
                 if (validRows.length === 0) {
                     newsList.replaceChildren();
                     const empty = document.createElement('p');
-                    empty.className = 'p-10 text-center text-slate-500';
+                    empty.className = 'p-10 text-center text-[var(--muted)]';
                     empty.textContent = '現在、新しいお知らせはありません。';
                     newsList.appendChild(empty);
                     return;
@@ -300,7 +301,26 @@
             }
         }
 
-        window.addEventListener('DOMContentLoaded', fetchNews);
+        // 月替わり写真：images/top/01.jpg〜12.jpg があれば表示。無ければ既定の写真（default.jpg）のまま
+        function setupMonthly() {
+            const month = new Date().getMonth() + 1;
+            const photo = document.getElementById('monthly-photo');
+            const monthly = new Image();
+            monthly.onload = () => {
+                photo.src = monthly.src;
+                photo.alt = month + '月の北町の風景';
+                document.getElementById('photo-credit').hidden = true; // 既定写真のクレジットは月替わり写真では不要
+                document.getElementById('photo-month').textContent = month + '月の北町';
+            };
+            monthly.src = 'images/top/' + String(month).padStart(2, '0') + '.jpg';
+            document.getElementById('kairan-month').textContent = month + '月';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+            setupMonthly();
+            fetchNews();
+        });
     </script>
 </body>
 </html>
