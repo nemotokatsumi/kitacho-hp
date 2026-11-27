@@ -376,20 +376,48 @@ function registerNews(form) {
   return {ok: true, link: link, calendarRegistered: !!calendarResult};
 }
 
-function deleteNews(rowIndex) {
+// expected（画面に表示していた日付・カテゴリ・内容）を受け取った場合は、行番号の行が
+// その内容と一致するか確かめてから削除する。一覧が古く行がずれていても別のお知らせを消さない。
+function deleteNews(rowIndex, expected) {
   requireAccess();
   const index = Number(rowIndex);
   if (!index || index < 2) {
     throw new Error('削除対象が正しくありません。');
   }
-  const sheet = getSheet();
-  const eventId = sheet.getRange(index, 5).getValue();
-  const calendarId = sheet.getRange(index, 6).getValue();
-  if (eventId && calendarId) {
-    const calendar = CalendarApp.getCalendarById(calendarId);
-    const event = calendar && calendar.getEventById(eventId);
-    if (event) event.deleteEvent();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getSheet();
+    const target = expected ? findNewsRow_(sheet, index, expected) : index;
+    if (!target) {
+      throw new Error('このお知らせは既に削除されたか、一覧が古くなっています。画面を再読み込みしてからもう一度お試しください。');
+    }
+    const eventId = sheet.getRange(target, 5).getValue();
+    const calendarId = sheet.getRange(target, 6).getValue();
+    let calendarWarning = '';
+    if (eventId && calendarId) {
+      // カレンダーの予定が既に無い・権限が無い場合でも、お知らせ自体は削除できるようにする
+      try {
+        const calendar = CalendarApp.getCalendarById(calendarId);
+        const event = calendar && calendar.getEventById(eventId);
+        if (event) event.deleteEvent();
+      } catch (error) {
+        calendarWarning = 'カレンダーの予定は削除できませんでした（' + error.message + '）。必要ならカレンダーから直接削除してください。';
+      }
+    }
+    sheet.deleteRow(target);
+    return { ok: true, warning: calendarWarning };
+  } finally {
+    lock.releaseLock();
   }
-  sheet.deleteRow(index);
-  return { ok: true };
+}
+
+function findNewsRow_(sheet, index, expected) {
+  const key = [expected.date, expected.category, expected.content].map(value => String(value || ''));
+  const matches = row => sheet.getRange(row, 1, 1, 3).getDisplayValues()[0].every((value, i) => value === key[i]);
+  if (index <= sheet.getLastRow() && matches(index)) return index;
+  for (let row = sheet.getLastRow(); row >= 2; row--) {
+    if (matches(row)) return row;
+  }
+  return 0;
 }
