@@ -14,6 +14,7 @@
         .font-round { font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif; }
         .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 60; background: #fff; color: var(--green-dark); padding: .75rem 1rem; border-radius: .75rem; font-weight: bold; }
         .skip-link:focus { top: 1rem; }
+        [hidden] { display: none !important; }
         .card { background: #fff; border-radius: 1.25rem; box-shadow: 0 1px 2px rgba(31,42,36,.04), 0 8px 24px rgba(31,42,36,.06); }
         .eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .2em; color: var(--green); }
         .menu-item { display: flex; align-items: center; gap: .75rem; min-height: 56px; padding: .65rem .9rem; border-radius: 1rem; font-weight: 700; color: var(--ink); transition: background .2s, transform .2s; }
@@ -66,6 +67,10 @@
                 <a href="#calendar" class="px-4 py-2 rounded-full text-[var(--muted)] hover:text-[var(--ink)] hover:bg-black/5 transition">今月の予定</a>
                 <a href="#join" class="ml-2 px-5 py-2.5 rounded-full bg-[var(--green)] text-white hover:bg-[var(--green-dark)] transition">町会加入のご案内</a>
             </nav>
+            <!-- 管理者用リンク：#admin-on で開いたブラウザにだけ表示（#admin-off で解除） -->
+            <a id="admin-link" hidden href="https://script.google.com/macros/s/AKfycbw0yAAL18JB97hNvRx-U4A74sKxZKETcEjg5enlQNlfmf-nHvN9ogYPCRU0Dwy31OQuUw/exec" target="_blank" rel="noopener noreferrer" class="ml-auto md:ml-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-black/10 text-xs font-bold text-[var(--muted)] hover:bg-black/5 transition" aria-label="管理画面を別タブで開く">
+                <i data-lucide="settings" class="w-4 h-4"></i><span>管理画面</span>
+            </a>
         </div>
         <nav class="md:hidden grid grid-cols-4 border-t border-black/5" aria-label="クイックメニュー">
             <a href="#news" class="mobile-section-link flex items-center justify-center text-xs font-bold text-[var(--muted)]">新着情報</a>
@@ -316,7 +321,19 @@
             document.getElementById('kairan-month').textContent = month + '月';
         }
 
+        // 管理者用リンクの表示切替（このブラウザだけに保存。管理画面自体はGoogleログインで保護）
+        function setupAdminLink() {
+            const key = 'kitacho-admin-link';
+            try {
+                if (location.hash === '#admin-on') localStorage.setItem(key, '1');
+                if (location.hash === '#admin-off') localStorage.removeItem(key);
+                if (/^#admin-(on|off)$/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
+                document.getElementById('admin-link').hidden = localStorage.getItem(key) !== '1';
+            } catch (e) { /* localStorage が使えない環境では表示しない */ }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
+            setupAdminLink();
             if (window.lucide) lucide.createIcons();
             setupMonthly();
             fetchNews();
