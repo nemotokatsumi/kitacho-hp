@@ -48,6 +48,7 @@
     </style>
     <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
     <script src="data/kairan.js"></script>
+    <script src="data/news.js"></script>
 </head>
 <body>
 
@@ -68,10 +69,6 @@
                 <a href="#calendar" class="px-4 py-2 rounded-full text-[var(--muted)] hover:text-[var(--ink)] hover:bg-black/5 transition">今月の予定</a>
                 <a href="#join" class="ml-2 px-5 py-2.5 rounded-full bg-[var(--green)] text-white hover:bg-[var(--green-dark)] transition">町会加入のご案内</a>
             </nav>
-            <!-- 管理者用リンク：#admin-on で開いたブラウザにだけ表示（#admin-off で解除） -->
-            <a id="admin-link" hidden href="https://script.google.com/macros/s/AKfycbw0yAAL18JB97hNvRx-U4A74sKxZKETcEjg5enlQNlfmf-nHvN9ogYPCRU0Dwy31OQuUw/exec" target="_blank" rel="noopener noreferrer" class="ml-auto md:ml-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-black/10 text-xs font-bold text-[var(--muted)] hover:bg-black/5 transition" aria-label="管理画面を別タブで開く">
-                <i data-lucide="settings" class="w-4 h-4"></i><span>管理画面</span>
-            </a>
         </div>
         <nav class="md:hidden grid grid-cols-4 border-t border-black/5" aria-label="クイックメニュー">
             <a href="#news" class="mobile-section-link flex items-center justify-center text-xs font-bold text-[var(--muted)]">新着情報</a>
@@ -127,7 +124,7 @@
                     <h2 class="font-round font-bold text-2xl md:text-3xl mt-1 mb-4 px-1">新着情報</h2>
                     <div class="card overflow-hidden">
                         <div id="news-list" class="divide-y divide-black/5">
-                            <p class="p-10 text-center text-[var(--muted)] animate-pulse">お知らせを読み込み中...</p>
+                            <p class="p-10 text-center text-[var(--muted)] animate-pulse">お知らせを表示しています...</p>
                         </div>
                     </div>
                 </section>
@@ -196,55 +193,7 @@
     </footer>
 
     <script>
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8qqCO0DH94_iS0cY25eapiPsFlIADdbAhY7BXkqMlzBKhfrlOd2G6gpFwfLIZlzkZhOzS2DkYBggv/pub?gid=0&single=true&output=csv";
-
-        function parseCsv(text) {
-            const rows = [];
-            let row = [];
-            let value = '';
-            let quoted = false;
-
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                if (char === '"') {
-                    if (quoted && text[i + 1] === '"') {
-                        value += '"';
-                        i++;
-                    } else {
-                        quoted = !quoted;
-                    }
-                } else if (char === ',' && !quoted) {
-                    row.push(value.trim());
-                    value = '';
-                } else if ((char === '\n' || char === '\r') && !quoted) {
-                    if (char === '\r' && text[i + 1] === '\n') i++;
-                    row.push(value.trim());
-                    if (row.some(cell => cell !== '')) rows.push(row);
-                    row = [];
-                    value = '';
-                } else {
-                    value += char;
-                }
-            }
-
-            if (value !== '' || row.length > 0) {
-                row.push(value.trim());
-                if (row.some(cell => cell !== '')) rows.push(row);
-            }
-            return rows;
-        }
-
-        // Googleドライブのダウンロード用リンク（uc?export=download）を、
-        // 別タブでプレビュー表示されるリンク（/file/d/ID/view）に変換する
-        function toDriveViewUrl(url) {
-            const text = String(url || '').trim();
-            if (!/^https:\/\/(drive|docs)\.google\.com\/uc\?/.test(text)) return text;
-            const match = text.match(/[?&]id=([\w-]+)/);
-            return match ? 'https://drive.google.com/file/d/' + match[1] + '/view' : text;
-        }
-
         function makeNewsItem(date, category, content, link) {
-            link = toDriveViewUrl(link);
             const item = document.createElement('article');
             item.className = "px-5 py-4 md:px-6 hover:bg-[#fafbf7] transition flex flex-col md:flex-row md:items-center gap-2 md:gap-6";
 
@@ -283,38 +232,20 @@
             return item;
         }
 
-        async function fetchNews() {
+        // 新着情報：data/news.js から表示（新しい日付順）
+        function renderNews() {
             const newsList = document.getElementById('news-list');
-            try {
-                const response = await fetch(csvUrl, { cache: 'no-store' });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                const rows = parseCsv(await response.text()).slice(1);
-                const validRows = rows.filter(cols => cols.length >= 3 && cols[0] && cols[2]);
-
-                if (validRows.length === 0) {
-                    newsList.replaceChildren();
-                    const empty = document.createElement('p');
-                    empty.className = 'p-10 text-center text-[var(--muted)]';
-                    empty.textContent = '現在、新しいお知らせはありません。';
-                    newsList.appendChild(empty);
-                    return;
-                }
-
-                validRows.sort((a, b) => b[0].replace(/[.-]/g, '').localeCompare(a[0].replace(/[.-]/g, '')));
-
-                newsList.replaceChildren();
-                validRows.slice(0, 20).forEach(cols => {
-                    newsList.appendChild(makeNewsItem(cols[0], cols[1] || 'お知らせ', cols[2], cols[3] || ''));
-                });
-            } catch (error) {
-                newsList.replaceChildren();
-                const failure = document.createElement('p');
-                failure.className = 'p-10 text-center text-red-600';
-                failure.textContent = 'データの読み込みに失敗しました。しばらくしてから再度お試しください。';
-                newsList.appendChild(failure);
-                console.error('お知らせの読み込みに失敗:', error);
+            const rows = (window.KITACHO_NEWS || []).filter(n => n.date && n.content);
+            newsList.replaceChildren();
+            if (rows.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'p-10 text-center text-[var(--muted)]';
+                empty.textContent = '現在、新しいお知らせはありません。';
+                newsList.appendChild(empty);
+                return;
             }
+            rows.sort((a, b) => b.date.replace(/[.-]/g, '').localeCompare(a.date.replace(/[.-]/g, '')));
+            rows.slice(0, 20).forEach(n => newsList.appendChild(makeNewsItem(n.date, n.category || 'お知らせ', n.content, n.link || '')));
         }
 
         // 月替わり写真：images/top/01.jpg〜12.jpg があれば表示。無ければ既定の写真（default.jpg）のまま
@@ -345,23 +276,11 @@
             document.getElementById('gomi-card').hidden = false;
         }
 
-        // 管理者用リンクの表示切替（このブラウザだけに保存。管理画面自体はGoogleログインで保護）
-        function setupAdminLink() {
-            const key = 'kitacho-admin-link';
-            try {
-                if (location.hash === '#admin-on') localStorage.setItem(key, '1');
-                if (location.hash === '#admin-off') localStorage.removeItem(key);
-                if (/^#admin-(on|off)$/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
-                document.getElementById('admin-link').hidden = localStorage.getItem(key) !== '1';
-            } catch (e) { /* localStorage が使えない環境では表示しない */ }
-        }
-
         window.addEventListener('DOMContentLoaded', () => {
-            setupAdminLink();
             if (window.lucide) lucide.createIcons();
             setupMonthly();
             setupKairan();
-            fetchNews();
+            renderNews();
         });
     </script>
 </body>
